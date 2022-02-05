@@ -1,3 +1,10 @@
+
+/*
+Author ---  Md Ashik Khan
+ID --- 21CS60A02
+task ---    CL2 ASSIGNMENT 03
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,22 +57,27 @@ int main(){
 	printf("[+]Connected to Server(type (/exit) to exit from server).\n");
     while(1){
 		printf("Client: \t");
+        bzero(str,sizeof(str));
 	    n = 0; 
         while ((str[n++] = getchar()) != '\n') 
          ; 
         str[n-1]='\0';
         write(clientSocket,str,strlen(str));
-        len=strlen(str);
-        count=0;
-        for(j=0;j<len;j++)
-        {
-            if(str[j]==' ')
-                break;
-            else
-                str1[count++]=str[j];
-        }
-        str1[count]='\0';
-        
+        // len=strlen(str);
+        // count=0;
+        // for(j=0;j<len;j++)
+        // {
+        //     if(str[j]==' ')
+        //         break;
+        //     else
+        //         str1[count++]=str[j];
+        // }
+        // str1[count]='\0';
+
+        bzero(str1,sizeof(str1));  
+        bzero(str2,sizeof(str2));
+        sscanf(str,"%s %s",str1,str2);
+
         if(strcmp(str1,"/upload")==0)
         {
             upload(str2,clientSocket);
@@ -92,13 +104,7 @@ int main(){
 			printf("[-]Disconnected from server.\n");
 			exit(1);
 		}
-		else
-		{
-			bzero(buffer,sizeof(buffer));
-			strcmp(buffer,"Wrong");
-			send(clientSocket,buffer,sizeof(buffer),0);
-			
-		}
+		
         bzero(msg,sizeof(msg));
 		if(recv(clientSocket,msg, 1024, 0) < 0){
 			printf("[-]Error in receiving data.\n");
@@ -119,7 +125,7 @@ void upload(char filename[],int clientSocket){
 	if(!fp)
 	{
 		printf("Error in opening.\n");
-		return -1;
+		exit(1);
 	}
 	while(fgets(buffer,sizeof(buffer),fp))
 	{
@@ -149,14 +155,14 @@ void download(char filename[],int clientSocket){
     if(!fp)
     {
     	printf("Error in the file.\n");
-    	return -1;
+    	exit(1);
     }
     recv(clientSocket,&b,sizeof(b),0);
     bzero(buffer,sizeof(buffer));
     while(b>0)
     {
         bzero(buffer,sizeof(buffer));
-        recv(clientSocket,buffer,sizeof(buffer),0);
+        recv(clientSocket,buffer, MAX, 0);
         len=strlen(buffer);
         b=b-len;
         fprintf(fp,"%s",buffer);
@@ -165,35 +171,45 @@ void download(char filename[],int clientSocket){
     fclose(fp);
 }
 
+/*
+/files: View all ﬁles that have been uploaded to the server, along with all
+details (owners, collaborators, permissions), and the no. of lines in the ﬁle.
+*/
 void files(int clientSocket){
-    FILE *fp;
-    int n,len,count,j,size=0,b;
     char buffer[MAX];
+    int clientsd,b,addrlen;
+    struct sockaddr_in address;
+
     recv(clientSocket,&b,sizeof(b),0);
-    while(b>0)
+    printf("Stored Files :  %d \n",b);
+
+    bzero(buffer,sizeof(buffer));
+    for (int i = 0; i < b; i++) 
     {
-    	memset(&buffer,'\0',sizeof(buffer));
-    	bzero(buffer,sizeof(buffer));
-    	recv(clientSocket,buffer,sizeof(buffer),0);
-    	printf("%s",buffer);
-    	len=strlen(buffer);
-    	b=b-len;
+        recv(clientSocket,buffer, MAX, 0);
+        printf("\t%d.%s\n" , i+1,buffer);
         bzero(buffer,sizeof(buffer));
     }
     send(clientSocket,&b,sizeof(b),0);
+    bzero(buffer,sizeof(buffer));
 }
 
+/*
+/users: View all active clients
+*/
 void users(int clientSocket){
     char buffer[MAX];
     int clientsd,b,addrlen;
     struct sockaddr_in address;
 
     recv(clientSocket,&b,sizeof(b),0);
+    printf("Server:  Active Users: %d \n",b);
 
+    bzero(buffer,sizeof(buffer));
     for (int i = 0; i < b; i++) 
     {
-        recv(clientSocket,buffer,strlen(buffer),0);
-        printf("%s\n" , buffer);
+        recv(clientSocket,buffer, MAX, 0);
+        printf("\t%d.%s\n" , i+1,buffer);
         bzero(buffer,sizeof(buffer));
     }
     send(clientSocket,&b,sizeof(b),0);
