@@ -23,9 +23,7 @@ void upload(char filename[],int clientSocket);
 void download(char filename[],int clientSocket);
 void files(int clientSocket);
 void users(int clientSocket);
-void deleteIndex();
-void insertIndex();
-void readIndex();
+void readIndex(int clientSocket);
 void invite();
 
 int main(){
@@ -80,11 +78,23 @@ int main(){
 
         if(strcmp(str1,"/upload")==0)
         {
-            upload(str2,clientSocket);
+            bzero(buffer,sizeof(buffer));
+            recv(clientSocket,buffer, MAX, 0);
+            if(strcmp(buffer,"Send")==0){
+                upload(str2,clientSocket);
+            }else if(strcmp(buffer,"Duplicate")==0){
+
+            }
         }
         else if(strcmp(str1,"/download")==0)
         {
-        	download(str2,clientSocket);
+            bzero(buffer,sizeof(buffer));
+            recv(clientSocket,buffer, MAX, 0);
+            if(strcmp(buffer,"permission_granted")==0){
+                download(str2,clientSocket);
+            }else if(strcmp(buffer,"permission_denied")==0){
+
+            }
         }
         else if(strcmp(str,"/files")==0)
         {
@@ -104,9 +114,11 @@ int main(){
 			printf("[-]Disconnected from server.\n");
 			exit(1);
 		}
-		
+
+		bzero(buffer,sizeof(buffer));
         bzero(msg,sizeof(msg));
-		if(recv(clientSocket,msg, 1024, 0) < 0){
+
+		if(recv(clientSocket,msg, MAX, 0) < 0){
 			printf("[-]Error in receiving data.\n");
 		}else{
 			printf("Server:  %s\n",msg);
@@ -116,6 +128,9 @@ int main(){
 	return 0;
 }
 
+/*
+/upload <filename>: Upload the local ﬁle ﬁlename to the server
+*/
 void upload(char filename[],int clientSocket){
     FILE *fp;
     int n,len,count,j,size=0,b;
@@ -146,6 +161,10 @@ void upload(char filename[],int clientSocket){
 	fclose(fp);
 }
 
+/*
+/download <filename>: Download the server ﬁle ﬁlename to the client, if
+given client has permission to access that ﬁle
+*/
 void download(char filename[],int clientSocket){
     FILE *fp;
     int n,len,count,j,size=0,b;
@@ -181,7 +200,30 @@ void files(int clientSocket){
     struct sockaddr_in address;
 
     recv(clientSocket,&b,sizeof(b),0);
-    printf("Stored Files :  %d \n",b);
+    printf("Server:  \n\tStored Files :  %d \n",b);
+
+    bzero(buffer,sizeof(buffer));
+    for (int i = 0; i < b; i++) 
+    {
+        recv(clientSocket,buffer, MAX, 0);
+        printf("\t%d.%s\n" , i+1,buffer);
+        bzero(buffer,sizeof(buffer));
+    }
+    send(clientSocket,&b,sizeof(b),0);
+    bzero(buffer,sizeof(buffer));
+}
+
+/*
+Read from ﬁle ﬁlename
+starting from line index start_idx to end_idx . If only one index is speciﬁed, read
+that line. If none are speciﬁed, read the entire ﬁle.
+*/
+void readIndex(int clientSocket){
+    char buffer[MAX];
+    int clientsd,b,addrlen;
+
+    recv(clientSocket,&b,sizeof(b),0);
+    printf("Server:  \n\t lines :  %d \n",b);
 
     bzero(buffer,sizeof(buffer));
     for (int i = 0; i < b; i++) 
@@ -203,7 +245,7 @@ void users(int clientSocket){
     struct sockaddr_in address;
 
     recv(clientSocket,&b,sizeof(b),0);
-    printf("Server:  Active Users: %d \n",b);
+    printf("Server:  \n\tActive Users: %d \n",b);
 
     bzero(buffer,sizeof(buffer));
     for (int i = 0; i < b; i++) 
