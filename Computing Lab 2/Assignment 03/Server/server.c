@@ -22,7 +22,7 @@ task ---    CL2 ASSIGNMENT 03
 #define MAX 1024
 #define STR 256
 #define PORT 8888
-#define CLIENT 5
+#define CLIENT 2
 
 /*
 ﬁles that have been uploaded to the server, along with all
@@ -52,7 +52,6 @@ server should maintain a track of all ﬁles, the no. of lines in the ﬁle and 
 struct permissionRecord {
   int owner;
   int lines;
-//   int permission;     // 1 = owner , 2 = editor , 3 = viewer
   struct collaborator collaborators[MAX];
   int total_collaborators;
   char file_name[STR];
@@ -77,6 +76,8 @@ void invite();
 int uniqueIdGenerator(int unique_number ,struct clientRecord client_details[]);
 int checkFileName(char filename[]);
 int getFilelines(char filename[]);
+int checkClientStatus(struct clientRecord client_details[],int client_id);
+int getClientSoket(struct clientRecord client_details[],int client_id);
 int checkFilePermission(char filename[],int clientSocket,int owner);
 
 int main(int argc , char *argv[])
@@ -87,7 +88,7 @@ int main(int argc , char *argv[])
     struct clientRecord client_details[CLIENT];
     int max_sd,size,del;
     char msg[MAX],buffer[MAX];
-    char str[MAX],str1[STR],str2[STR],str3[STR],str4[999];
+    char str[MAX],str1[STR],str2[STR],str3[STR],str4[STR];
     int start_idx,end_idx;
     struct sockaddr_in address;
     struct dirent *de;
@@ -268,8 +269,13 @@ int main(int argc , char *argv[])
                         send(clientsd ,msg,MAX,0);
                         bzero(msg,sizeof(msg));
 
-                        printf("Permission Denied for File %s .\n",str2);
-                        strcpy(msg,"Permission Denied for File.\n");
+                        if(checkFileName(str2)){
+                            printf("File %s does not exist.\n",str2);
+                            strcpy(msg,"File does not exist.\n");
+                        }else{
+                            printf("Permission Denied for File %s .\n",str2);
+                            strcpy(msg,"Permission Denied for File.\n");
+                        }
                     }
                    
                 }
@@ -436,6 +442,51 @@ int main(int argc , char *argv[])
                             strcpy(msg,"File does not exist.\n");
                         }
                     }
+                }
+                else if(strcmp(str1,"/invite")==0 && valid == 3)
+                {
+                    int valid = sscanf(str,"%s %s %d %s\n",str1,str2,&start_idx,str4);
+                    int invite_client_id,permission,soket_invite_client;
+
+                    if(strcmp(str4,"E")==0){
+                        permission = 2;                              // 2 = editor , 3 = viewer
+                    }
+                    else if(strcmp(str4,"V")==0){
+                        permission = 3;                             // 2 = editor , 3 = viewer
+                    }
+                    else{
+                        permission = 0; 
+                    }
+
+                    invite_client_id = start_idx;
+
+                    if(checkFileName(str2) == 0 && (permission == 2 || permission == 3) && checkClientStatus(client_details,invite_client_id) == 1){
+
+                        soket_invite_client = getClientSoket(client_details,invite_client_id);
+
+                        // bzero(msg,sizeof(msg));
+                        // sprintf(msg,"\receive %s %d %s",str2,start_idx,str4);
+                        send(soket_invite_client ,str,MAX,0);
+                        bzero(msg,sizeof(msg));
+
+                        printf("Invitation sent to Client %d for File %s \n",invite_client_id,str2);
+                        strcpy(msg,"Invitation sent to Client.\n");
+                    }else{
+                        if(checkFileName(str2) == 1){
+                            printf("File %s does not exist.\n",str2);
+                            strcpy(msg,"File does not exist.\n");
+                        }
+                        else if(checkClientStatus(client_details,invite_client_id) == 0){
+                            printf("Invited Client %d does not exist.\n",invite_client_id);
+                            strcpy(msg,"Invited Client does not exist.\n");
+                        }
+                        else{
+                            printf("Wrong command received.\n");
+                            bzero(msg,sizeof(msg));
+                            strcpy(msg,"Wrong command.\n");
+                        }
+                    }
+                    
                 }
                 else if(strcmp(str,"/exit")==0)
                 {
@@ -687,6 +738,33 @@ void users(struct clientRecord client_details[],int connected_client,int clientS
     bzero(buffer,sizeof(buffer));
 }
 
+/*
+check  client is active or not with client UNIQUEID
+*/
+int checkClientStatus(struct clientRecord client_details[],int client_id){
+    int status = 0;
+    for (int i = 0; i < CLIENT; i++) 
+    {
+        if(client_details[i].unique_id == client_id){   
+            status = client_details[i].status;
+        }
+    }
+    return status;
+}
+
+/*
+get  client Soket is active or not with client UNIQUEID
+*/
+int getClientSoket(struct clientRecord client_details[],int client_id){
+    int socket_id = 0;
+    for (int i = 0; i < CLIENT; i++) 
+    {
+        if(client_details[i].unique_id == client_id){   
+            socket_id = client_details[i].socket_id;
+        }
+    }
+    return socket_id;
+}
 /*
 /read <filename> <start_idx> <end_idx>: Read from ﬁle ﬁlename
 starting from line index start_idx to end_idx . If only one index is speciﬁed, read

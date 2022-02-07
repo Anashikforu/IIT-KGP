@@ -26,15 +26,27 @@ void users(int clientSocket);
 void readIndex(int clientSocket);
 void invite();
 
+void print_error(char *msg)
+{
+	perror(msg);
+	exit(0);
+}
+void print_msg(char *msg)
+{
+	puts(msg);
+}
+
 int main(){
 
-	int clientSocket,fd;
+	int clientSocket,fd,invite_owner;
 	FILE *fp;
 	char ch,c;
 	struct sockaddr_in serverAddr;
     char msg[MAX],buffer[MAX];
     char str[MAX],str1[STR],str2[STR],str3[STR],str4[999];
 	int n,len,count,j,size=0,b,validation;
+    fd_set readfds;
+
 	clientSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if(clientSocket < 0){
 		printf("[-]Error in connection.\n");
@@ -71,82 +83,148 @@ int main(){
 	// printf("[+]Connected to Server(type (/exit) to exit from server).\n");
 
     while(1){
-		printf("Client: \t");
-        bzero(str,sizeof(str));
-	    n = 0; 
-        while ((str[n++] = getchar()) != '\n') 
-         ; 
-        str[n-1]='\0';
-        write(clientSocket,str,strlen(str));
-        // len=strlen(str);
-        // count=0;
-        // for(j=0;j<len;j++)
-        // {
-        //     if(str[j]==' ')
-        //         break;
-        //     else
-        //         str1[count++]=str[j];
-        // }
-        // str1[count]='\0';
 
-        bzero(str1,sizeof(str1));  
-        bzero(str2,sizeof(str2));
-        validation = sscanf(str,"%s %s",str1,str2);
+        int fdmax = clientSocket;
+        FD_ZERO(&readfds);
+		FD_SET(clientSocket, &readfds); /* add sockfd to connset */
+		FD_SET(0, &readfds);			 /* add STDIN to connset */
 
-        if(strcmp(str1,"/upload")==0 && validation == 2)
-        {
-            bzero(buffer,sizeof(buffer));
-            recv(clientSocket,buffer, MAX, 0);
-            if(strcmp(buffer,"Send")==0){
-                upload(str2,clientSocket);
-            }else if(strcmp(buffer,"Duplicate")==0){
-
-            }
-        }
-        else if(strcmp(str1,"/download")==0 && validation == 2)
-        {
-            bzero(buffer,sizeof(buffer));
-            recv(clientSocket,buffer, MAX, 0);
-            if(strcmp(buffer,"permission_granted")==0){
-                download(str2,clientSocket);
-            }else if(strcmp(buffer,"permission_denied")==0){
-
-            }
-        }
-        else if(strcmp(str,"/files")==0)
-        {
-            files(clientSocket);
-        }
-        else if(strcmp(str,"/users")==0)
-        {
-            users(clientSocket);
-        }
-        else if(strcmp(str1,"/read")==0)
-        {
-            bzero(buffer,sizeof(buffer));
-            recv(clientSocket,buffer, MAX, 0);
-            if(strcmp(buffer,"permission_granted")==0){
-                readIndex(clientSocket);
-            }else if(strcmp(buffer,"permission_denied")==0){
-
-            }
-        }
-		else if(strcmp(str, "/exit") == 0){
-			close(clientSocket);
-			printf("[-]Disconnected from server.\n");
-			exit(1);
+		if (select(fdmax + 1, &readfds, NULL, NULL, NULL) < 0)
+		{
+			fprintf(stdout, "select() error\n");
+			exit(0);
 		}
 
-		bzero(buffer,sizeof(buffer));
-        bzero(msg,sizeof(msg));
+        if (FD_ISSET( clientSocket , &readfds)) 
+        {
+            bzero(msg,sizeof(msg));
+            bzero(str1,sizeof(str1));  
+            bzero(str2,sizeof(str2));
+            bzero(str2,sizeof(str2));
+            bzero(str2,sizeof(str4));
 
-		if(recv(clientSocket,msg, MAX, 0) < 0){
-			printf("[-]Error in receiving data.\n");
-		}else{
-			printf("Server:  %s\n",msg);
-			bzero(msg,sizeof(msg));
-		}
-	}
+            if(recv(clientSocket,msg, MAX, 0) < 0){
+				printf("[-]Error in receiving data.\n");
+			}
+			
+            int valid = sscanf(msg,"%s %s %d %s\n",str1,str2,invite_owner,str4);
+
+            if(strcmp(str4,"E") == 1){
+                strcpy(str4,"EDITOR");
+            }
+            else if(strcmp(str4,"V") == 1){
+                strcpy(str4,"VIEWER");
+            }
+            printf("CLIENT %d is inviting you as %s of %s\n", invite_owner,str4,str2);
+			
+			if (strcmp(str1, "/invite") == 0)
+			{
+				//printf("%s\n", msger);
+				fprintf(stdout, "Reply in Yes and No only\n");
+				bzero(msg, strlen(msg));
+				fgets(msg, 1024, stdin);
+				if (strncmp(msg, "Yes", 3) == 0 || strncmp(msg, "No", 2) == 0)
+				{
+					if (send(clientSocket, msg, MAX, 0) < 0)
+					{
+                        perror("[-]Error in sending data.\n");
+	                    exit(0);
+					}
+				}
+				else
+				{
+					if (send(clientSocket, msg, MAX, 0) < 0)
+					{
+						perror("[-]Error in sending data.\n");
+	                    exit(0);
+					}
+				}
+				printf("feedback succesfully sended \n");
+			}
+
+			fflush(stdout);
+			// printf("Client2: \t");
+        }
+
+        if (FD_ISSET( 0 , &readfds)) 
+        {
+            // printf("Client1: \t");
+            bzero(str,sizeof(str));
+            n = 0; 
+            while ((str[n++] = getchar()) != '\n') 
+            ; 
+            str[n-1]='\0';
+            write(clientSocket,str,strlen(str));
+            // len=strlen(str);
+            // count=0;
+            // for(j=0;j<len;j++)
+            // {
+            //     if(str[j]==' ')
+            //         break;
+            //     else
+            //         str1[count++]=str[j];
+            // }
+            // str1[count]='\0';
+
+            bzero(str1,sizeof(str1));  
+            bzero(str2,sizeof(str2));
+            validation = sscanf(str,"%s %s",str1,str2);
+
+            if(strcmp(str1,"/upload")==0 && validation == 2)
+            {
+                bzero(buffer,sizeof(buffer));
+                recv(clientSocket,buffer, MAX, 0);
+                if(strcmp(buffer,"Send")==0){
+                    upload(str2,clientSocket);
+                }else if(strcmp(buffer,"Duplicate")==0){
+
+                }
+            }
+            else if(strcmp(str1,"/download")==0 && validation == 2)
+            {
+                bzero(buffer,sizeof(buffer));
+                recv(clientSocket,buffer, MAX, 0);
+                if(strcmp(buffer,"permission_granted")==0){
+                    download(str2,clientSocket);
+                }else if(strcmp(buffer,"permission_denied")==0){
+
+                }
+            }
+            else if(strcmp(str,"/files")==0)
+            {
+                files(clientSocket);
+            }
+            else if(strcmp(str,"/users")==0)
+            {
+                users(clientSocket);
+            }
+            else if(strcmp(str1,"/read")==0)
+            {
+                bzero(buffer,sizeof(buffer));
+                recv(clientSocket,buffer, MAX, 0);
+                if(strcmp(buffer,"permission_granted")==0){
+                    readIndex(clientSocket);
+                }else if(strcmp(buffer,"permission_denied")==0){
+
+                }
+            }
+            else if(strcmp(str, "/exit") == 0){
+                close(clientSocket);
+                printf("[-]Disconnected from server.\n");
+                exit(1);
+            }
+
+            bzero(buffer,sizeof(buffer));
+            bzero(msg,sizeof(msg));
+
+            if(recv(clientSocket,msg, MAX, 0) < 0){
+                printf("[-]Error in receiving data.\n");
+            }else{
+                printf("Server:  %s\n",msg);
+                bzero(msg,sizeof(msg));
+            }
+        }
+    }
 	return 0;
 }
 
