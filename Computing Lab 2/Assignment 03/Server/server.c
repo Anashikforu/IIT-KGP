@@ -62,6 +62,7 @@ void readIndex(char filename[],int clientSocket,int start_idx,int end_idx);
 void insertIndex(char filename[],int clientSocket,int idx,char message[]);
 void deleteIndex(char filename[],int clientSocket,int start_idx,int end_idx);
 void restore(char sourceFile[],char targetFile[]);
+void updateFileLines(char filename[]);
 void invite();
 
 int uniqueIdGenerator(int unique_number ,struct clientRecord client_details[]);
@@ -273,7 +274,15 @@ int main(int argc , char *argv[])
                         end_idx = total_lines - 1;
                     }
 
-                    if(checkFilePermission(str2,clientsd,owner) == 1 && total_lines >= start_idx && total_lines >= end_idx ){
+                    if(start_idx < 0 ){
+                        start_idx += total_lines;
+                    }
+
+                    if(end_idx < 0 ){
+                        end_idx += total_lines;
+                    }
+
+                    if(checkFilePermission(str2,clientsd,owner) == 1 && start_idx <= end_idx  && total_lines >= start_idx && total_lines >= end_idx ){
                         strcpy(msg,"permission_granted");
                         send(clientsd ,msg,MAX,0);
                         bzero(msg,sizeof(msg));
@@ -285,8 +294,21 @@ int main(int argc , char *argv[])
                         send(clientsd ,msg,MAX,0);
                         bzero(msg,sizeof(msg));
 
-                        printf("Permission Denied for File %s .\n",str2);
-                        strcpy(msg,"Permission Denied for File.\n");
+                        /*
+                        Appropriate error message to be returned to client
+                        based on situation (ﬁle does not exist / client does not have access /
+                        invalid line numbers)
+                        */
+                        if(checkFilePermission(str2,clientsd,owner) == 0){
+                            printf("Client does not have access for File %s .\n",str2);
+                            strcpy(msg,"Client does not have access for File.\n");
+                        }else if(start_idx > end_idx  || total_lines < start_idx || total_lines < end_idx){
+                            printf("invalid line numbers for File %s .\n",str2);
+                            strcpy(msg,"invalid line numbers for File.\n");
+                        }else{
+                            printf("File %s does not exist.\n",str2);
+                            strcpy(msg,"File does not exist.\n");
+                        }
                     }
                 }
                 else if(strcmp(str1,"/insert")==0 && valid == 3)
@@ -295,46 +317,82 @@ int main(int argc , char *argv[])
 
                     int total_lines = getFilelines(str2);
 
-                    if(valid == 4 && total_lines >= start_idx ){
-                        if(checkFilePermission(str2,clientsd,owner) == 1){
-                            strcpy(msg,"permission_granted");
-                            send(clientsd ,msg,MAX,0);
-                            bzero(msg,sizeof(msg));
+                    if(start_idx < 0 ){
+                        start_idx += total_lines;
+                    }
 
+                    if(valid == 4 && total_lines >= start_idx && checkFilePermission(str2,clientsd,owner) == 1 ){
+    
                             insertIndex(str2,clientsd,start_idx,str4);
                             strcpy(msg,"File inserting completed.\n");
-                        }else{
-                            strcpy(msg,"permission_denied");
-                            send(clientsd ,msg,MAX,0);
-                            bzero(msg,sizeof(msg));
 
-                            printf("Permission Denied for File %s .\n",str2);
-                            strcpy(msg,"Permission Denied for File.\n");
-                        }
                     }else{
-                        printf("Wrong command received.\n");
-                        bzero(msg,sizeof(msg));
-                        strcpy(msg,"Wrong command.\n");
+                        
+                        /*
+                        Appropriate error message to be returned to client
+                        based on situation (ﬁle does not exist / client does not have access /
+                        invalid line numbers)
+                        */
+                        if(checkFilePermission(str2,clientsd,owner) == 0){
+                            printf("Client does not have access for File %s .\n",str2);
+                            bzero(msg,sizeof(msg));
+                            strcpy(msg,"Client does not have access for File.\n");
+                        }else if(total_lines < start_idx){
+                            printf("invalid line numbers for File %s .\n",str2);
+                            bzero(msg,sizeof(msg));
+                            strcpy(msg,"invalid line numbers for File.\n");
+                        }else{
+                            printf("File %s does not exist.\n",str2);
+                            bzero(msg,sizeof(msg));
+                            strcpy(msg,"File does not exist.\n");
+                        }
                     }
                 }
-                else if(strcmp(str1,"/delete")==0 && valid == 4)
+                else if(strcmp(str1,"/delete")==0 && valid >= 2)
                 {
                     int total_lines = getFilelines(str2);
 
-                    if(checkFilePermission(str2,clientsd,owner) == 1 && total_lines >= start_idx && total_lines >= end_idx ){
-                        strcpy(msg,"permission_granted");
-                        send(clientsd ,msg,MAX,0);
-                        bzero(msg,sizeof(msg));
+                    //If only one index is speciﬁed, read that line.
+                    if(valid == 3){
+                        end_idx = start_idx;
+                    }
+
+                    //If none are speciﬁed, read the entire ﬁle.
+                    if(valid == 2){
+                        start_idx = 0;
+                        end_idx = total_lines - 1;
+                    }
+
+                    if(start_idx < 0 ){
+                        start_idx += total_lines;
+                    }
+
+                    if(end_idx < 0 ){
+                        end_idx += total_lines;
+                    }
+
+                    if(checkFilePermission(str2,clientsd,owner) == 1 && start_idx <= end_idx  && total_lines >= start_idx && total_lines >= end_idx ){
 
                         deleteIndex(str2,clientsd,start_idx,end_idx);
+                        printf("Deletion completed for File %s .\n",str2);
                         strcpy(msg,"File deletion completed.\n");
                     }else{
-                        strcpy(msg,"permission_denied");
-                        send(clientsd ,msg,MAX,0);
-                        bzero(msg,sizeof(msg));
 
-                        printf("Permission Denied for File %s .\n",str2);
-                        strcpy(msg,"Permission Denied for File.\n");
+                        /*
+                        Appropriate error message to be returned to client
+                        based on situation (ﬁle does not exist / client does not have access /
+                        invalid line numbers)
+                        */
+                        if(checkFilePermission(str2,clientsd,owner) == 0){
+                            printf("Client does not have access for File %s .\n",str2);
+                            strcpy(msg,"Client does not have access for File.\n");
+                        }else if(start_idx > end_idx  || total_lines < start_idx || total_lines < end_idx){
+                            printf("invalid line numbers for File %s .\n",str2);
+                            strcpy(msg,"invalid line numbers for File.\n");
+                        }else{
+                            printf("File %s does not exist.\n",str2);
+                            strcpy(msg,"File does not exist.\n");
+                        }
                     }
                 }
                 else if(strcmp(str,"/exit")==0)
@@ -496,6 +554,42 @@ void updateFileRecord(char filename[],int owner){
 }
 
 /*
+The server should maintain a track of all ﬁles records
+ﬁle/data structure .
+*/
+void updateFileLines(char filename[]){
+    FILE *fp;
+    int n=0,len,count,count1,j,size=0,b;
+    char buffer[MAX];
+    b=0;
+    int d = permitted_file;
+
+    fp=fopen(filename,"r");
+
+    if(!fp)
+    {
+        printf("Error in the file.\n");
+        exit(1);
+    }
+
+    while(!feof(fp))
+    {
+        memset(buffer, 0x00, MAX); // clean buffer
+        fscanf(fp, "%[^\n]\n",buffer); // read file *prefer using fscanf
+        n++;
+    }
+
+    for (int i = 0; i < d; i++) 
+    {
+        if(strcmp(fileRecord[i].file_name,filename) == 0){
+            fileRecord[i].lines = n;
+        }
+    }
+
+    fclose(fp);
+}
+
+/*
 check filename is duplicate / exits or not .
 */
 int checkFileName(char filename[]){
@@ -523,11 +617,11 @@ int getFilelines(char filename[]){
     for (int i = 0; i < b; i++) 
     {
         if(strcmp(fileRecord[i].file_name,filename) == 0){
-            return 0;
+            return fileRecord[i].lines;
         }
     }
 
-    return 1;
+    return 0;
 }
 
 /*
@@ -577,14 +671,14 @@ void readIndex(char filename[],int clientSocket,int start_idx,int end_idx){
         printf("Error in the file.\n");
         exit(1);
     }
-    while(!feof(fp) || n <start_idx)
+    while(n <start_idx)
     {
         memset(buffer, 0x00, MAX); // clean buffer
         fscanf(fp, "%[^\n]\n",buffer); // read file *prefer using fscanf
         n++;
     }
 
-    for (int i = start_idx; i < end_idx; i++) 
+    for (int i = start_idx; i <= end_idx; i++) 
     {
         memset(buffer, 0x00, MAX); // clean buffer
         fscanf(fp, "%[^\n]\n",buffer); // read file *prefer using fscanf
@@ -592,6 +686,7 @@ void readIndex(char filename[],int clientSocket,int start_idx,int end_idx){
         bzero(buffer,sizeof(buffer));
     }
 
+    recv(clientSocket,&b,sizeof(b),0);
     bzero(buffer,sizeof(buffer));
 
     fclose(fp);
@@ -608,9 +703,6 @@ void insertIndex(char filename[],int clientSocket,int idx,char message[]){
     char buffer[MAX];
     int count=0,clientsd,addrlen,b;
     b = idx;
-    struct sockaddr_in address;
-    addrlen = sizeof(address);
-    send(clientSocket,&b,sizeof(b),0);
 
     fp=fopen(filename,"r");
     fc=fopen("copy.txt","w");
@@ -627,7 +719,7 @@ void insertIndex(char filename[],int clientSocket,int idx,char message[]){
         exit(1);
     }
 
-    while(!feof(fp) || n <idx)
+    while( n <idx)
     {
         memset(buffer, 0x00, MAX); // clean buffer
         fscanf(fp, "%[^\n]\n",buffer); // read file *prefer using fscanf
@@ -651,6 +743,7 @@ void insertIndex(char filename[],int clientSocket,int idx,char message[]){
     fclose(fc);
 
     restore("copy.txt",filename);
+    updateFileLines(filename);
 }
 
 /*
@@ -663,12 +756,9 @@ void deleteIndex(char filename[],int clientSocket,int start_idx,int end_idx){
     FILE *fp,*fc;
     int n=0;
     char buffer[MAX];
-    int count=0,clientsd,addrlen,b;
+    int count=0,b;
     b = end_idx -start_idx +1;
-    struct sockaddr_in address;
-    addrlen = sizeof(address);
-    send(clientSocket,&b,sizeof(b),0);
-
+    
     fp=fopen(filename,"r");
     fc=fopen("copy.txt","w");
 
@@ -684,15 +774,16 @@ void deleteIndex(char filename[],int clientSocket,int start_idx,int end_idx){
         exit(1);
     }
 
-    while(!feof(fp) || n <start_idx)
+    while( n <start_idx)
     {
         memset(buffer, 0x00, MAX); // clean buffer
         fscanf(fp, "%[^\n]\n",buffer); // read file *prefer using fscanf
         fprintf(fc, "%s\n",buffer);
+        bzero(buffer,sizeof(buffer));
         n++;
     }
 
-    for (int i = start_idx; i < end_idx; i++) 
+    for (int i = start_idx; i <= end_idx; i++) 
     {
         memset(buffer, 0x00, MAX); // clean buffer
         fscanf(fp, "%[^\n]\n",buffer); // read file *prefer using fscanf
@@ -704,6 +795,7 @@ void deleteIndex(char filename[],int clientSocket,int start_idx,int end_idx){
         memset(buffer, 0x00, MAX); // clean buffer
         fscanf(fp, "%[^\n]\n",buffer); // read file *prefer using fscanf
         fprintf(fc, "%s\n",buffer);
+        bzero(buffer,sizeof(buffer));
     }
 
     bzero(buffer,sizeof(buffer));
@@ -712,6 +804,7 @@ void deleteIndex(char filename[],int clientSocket,int start_idx,int end_idx){
     fclose(fc);
 
     restore("copy.txt",filename);
+    updateFileLines(filename);
 }
 
 /*

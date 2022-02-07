@@ -34,7 +34,7 @@ int main(){
 	struct sockaddr_in serverAddr;
     char msg[MAX],buffer[MAX];
     char str[MAX],str1[STR],str2[STR],str3[STR],str4[999];
-	int n,len,count,j,size=0,b;
+	int n,len,count,j,size=0,b,validation;
 	clientSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if(clientSocket < 0){
 		printf("[-]Error in connection.\n");
@@ -74,9 +74,9 @@ int main(){
 
         bzero(str1,sizeof(str1));  
         bzero(str2,sizeof(str2));
-        sscanf(str,"%s %s",str1,str2);
+        validation = sscanf(str,"%s %s",str1,str2);
 
-        if(strcmp(str1,"/upload")==0)
+        if(strcmp(str1,"/upload")==0 && validation == 2)
         {
             bzero(buffer,sizeof(buffer));
             recv(clientSocket,buffer, MAX, 0);
@@ -86,7 +86,7 @@ int main(){
 
             }
         }
-        else if(strcmp(str1,"/download")==0)
+        else if(strcmp(str1,"/download")==0 && validation == 2)
         {
             bzero(buffer,sizeof(buffer));
             recv(clientSocket,buffer, MAX, 0);
@@ -104,10 +104,15 @@ int main(){
         {
             users(clientSocket);
         }
-        else if(strcmp(str1,"/delete")==0)
+        else if(strcmp(str1,"/read")==0)
         {
-        	bzero(buffer,sizeof(buffer));
-        	send(clientSocket,buffer,sizeof(buffer),0);
+            bzero(buffer,sizeof(buffer));
+            recv(clientSocket,buffer, MAX, 0);
+            if(strcmp(buffer,"permission_granted")==0){
+                readIndex(clientSocket);
+            }else if(strcmp(buffer,"permission_denied")==0){
+
+            }
         }
 		else if(strcmp(str, "/exit") == 0){
 			close(clientSocket);
@@ -229,7 +234,7 @@ void readIndex(int clientSocket){
     for (int i = 0; i < b; i++) 
     {
         recv(clientSocket,buffer, MAX, 0);
-        printf("\t%d.%s\n" , i+1,buffer);
+        printf("\t%d.\t%s\n" , i+1,buffer);
         bzero(buffer,sizeof(buffer));
     }
     send(clientSocket,&b,sizeof(b),0);
