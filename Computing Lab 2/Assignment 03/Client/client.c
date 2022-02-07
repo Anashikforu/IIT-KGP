@@ -24,7 +24,6 @@ void download(char filename[],int clientSocket);
 void files(int clientSocket);
 void users(int clientSocket);
 void readIndex(int clientSocket);
-void invite();
 
 void print_error(char *msg)
 {
@@ -43,7 +42,7 @@ int main(){
 	char ch,c;
 	struct sockaddr_in serverAddr;
     char msg[MAX],buffer[MAX];
-    char str[MAX],str1[STR],str2[STR],str3[STR],str4[999];
+    char str[MAX],str1[STR],str2[STR],str3[STR],str4[STR];
 	int n,len,count,j,size=0,b,validation;
     fd_set readfds;
 
@@ -97,50 +96,47 @@ int main(){
 
         if (FD_ISSET( clientSocket , &readfds)) 
         {
+            bzero(buffer,sizeof(buffer));
             bzero(msg,sizeof(msg));
             bzero(str1,sizeof(str1));  
             bzero(str2,sizeof(str2));
-            bzero(str2,sizeof(str2));
-            bzero(str2,sizeof(str4));
+            bzero(str3,sizeof(str3));
+            bzero(str4,sizeof(str4));
 
             if(recv(clientSocket,msg, MAX, 0) < 0){
 				printf("[-]Error in receiving data.\n");
 			}
 			
-            int valid = sscanf(msg,"%s %s %d %s\n",str1,str2,invite_owner,str4);
+            int valid = sscanf(msg,"%s %s %d %s\n",str1,str2,&invite_owner,str4);
 
-            if(strcmp(str4,"E") == 1){
-                strcpy(str4,"EDITOR");
+            if(strcmp(str4,"E") == 0){
+                sprintf(str3,"EDITOR");
             }
-            else if(strcmp(str4,"V") == 1){
-                strcpy(str4,"VIEWER");
+            else if(strcmp(str4,"V") == 0){
+                sprintf(str3,"VIEWER");
             }
-            printf("CLIENT %d is inviting you as %s of %s\n", invite_owner,str4,str2);
+
 			
 			if (strcmp(str1, "/invite") == 0)
 			{
-				//printf("%s\n", msger);
-				fprintf(stdout, "Reply in Yes and No only\n");
+                
+                printf("Server:  CLIENT %d is inviting you as %s of %s\n", invite_owner,str3,str2);
+				
+				fprintf(stdout, "Valid Response: Yes No \n");
+				bzero(str3, strlen(str3));
 				bzero(msg, strlen(msg));
-				fgets(msg, 1024, stdin);
-				if (strncmp(msg, "Yes", 3) == 0 || strncmp(msg, "No", 2) == 0)
-				{
-					if (send(clientSocket, msg, MAX, 0) < 0)
-					{
-                        perror("[-]Error in sending data.\n");
-	                    exit(0);
-					}
-				}
-				else
-				{
-					if (send(clientSocket, msg, MAX, 0) < 0)
-					{
-						perror("[-]Error in sending data.\n");
-	                    exit(0);
-					}
-				}
-				printf("feedback succesfully sended \n");
+				n = 0; 
+                while ((str3[n++] = getchar()) != '\n') 
+                ; 
+                str3[n-1]='\0';
+                sprintf(msg,"/response %s %s %s",str2,str4,str3);
+                send(clientSocket, msg, MAX, 0);
+				
+				printf("Server:  Response sent succesfully.\n");
 			}
+            else{
+                printf("Server:  %s\n", msg);
+            }
 
 			fflush(stdout);
 			// printf("Client2: \t");

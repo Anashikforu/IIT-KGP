@@ -71,14 +71,15 @@ void insertIndex(char filename[],int clientSocket,int idx,char message[]);
 void deleteIndex(char filename[],int clientSocket,int start_idx,int end_idx);
 void restore(char sourceFile[],char targetFile[]);
 void updateFileLines(char filename[]);
-void invite();
+void updateFileCollaborator(char filename[],int collaborator_id,int permission);
 
 int uniqueIdGenerator(int unique_number ,struct clientRecord client_details[]);
 int checkFileName(char filename[]);
 int getFilelines(char filename[]);
+int getFileOwnerFd(struct clientRecord client_details[],char filename[]);
 int checkClientStatus(struct clientRecord client_details[],int client_id);
 int getClientSoket(struct clientRecord client_details[],int client_id);
-int checkFilePermission(char filename[],int clientSocket,int owner);
+int checkFilePermission(char filename[],int clientSocket,int owner,int editorPermission);
 
 int main(int argc , char *argv[])
 {
@@ -234,6 +235,9 @@ int main(int argc , char *argv[])
                 bzero(str4,sizeof(str4));  
                 int valid = sscanf(str,"%s %s %d %d",str1,str2,&start_idx,&end_idx);
 
+                // editor permission = 1 for Insert and Delete
+                // editor permission = 0 for Read and Download
+
                 printf("%s command received from client.\n",str);
                 if(strcmp(str1,"/upload")==0 && valid == 2)
                 {   
@@ -257,7 +261,7 @@ int main(int argc , char *argv[])
                 }
                 else if(strcmp(str1,"/download")==0 && valid == 2)
                 {
-                    if(checkFilePermission(str2,clientsd,owner) == 1){
+                    if(checkFilePermission(str2,clientsd,owner,0) == 1){
                         strcpy(msg,"permission_granted");
                         send(clientsd ,msg,MAX,0);
                         bzero(msg,sizeof(msg));
@@ -312,7 +316,7 @@ int main(int argc , char *argv[])
                         end_idx += total_lines;
                     }
 
-                    if(checkFilePermission(str2,clientsd,owner) == 1 && start_idx <= end_idx  && total_lines >= start_idx && total_lines >= end_idx ){
+                    if(checkFilePermission(str2,clientsd,owner,0) == 1 && start_idx <= end_idx  && total_lines >= start_idx && total_lines >= end_idx ){
                         strcpy(msg,"permission_granted");
                         send(clientsd ,msg,MAX,0);
                         bzero(msg,sizeof(msg));
@@ -333,7 +337,7 @@ int main(int argc , char *argv[])
                             printf("File %s does not exist.\n",str2);
                             strcpy(msg,"File does not exist.\n");
                         }
-                        else if(checkFilePermission(str2,clientsd,owner) == 0){
+                        else if(checkFilePermission(str2,clientsd,owner,0) == 0){
                             printf("Client does not have access for File %s .\n",str2);
                             strcpy(msg,"Client does not have access for File.\n");
                         }
@@ -357,7 +361,7 @@ int main(int argc , char *argv[])
                         start_idx += total_lines;
                     }
 
-                    if(valid == 4 && total_lines >= start_idx && checkFilePermission(str2,clientsd,owner) == 1 ){
+                    if(valid == 4 && total_lines >= start_idx && checkFilePermission(str2,clientsd,owner,1) == 1 ){
     
                             insertIndex(str2,clientsd,start_idx,str4);
                             strcpy(msg,"File inserting completed.\n");
@@ -373,7 +377,7 @@ int main(int argc , char *argv[])
                             printf("File %s does not exist.\n",str2);
                             strcpy(msg,"File does not exist.\n");
                         }
-                        else if(checkFilePermission(str2,clientsd,owner) == 0){
+                        else if(checkFilePermission(str2,clientsd,owner,1) == 0){
                             printf("Client does not have access for File %s .\n",str2);
                             bzero(msg,sizeof(msg));
                             strcpy(msg,"Client does not have access for File.\n");
@@ -413,7 +417,7 @@ int main(int argc , char *argv[])
                         end_idx += total_lines;
                     }
 
-                    if(checkFilePermission(str2,clientsd,owner) == 1 && start_idx <= end_idx  && total_lines >= start_idx && total_lines >= end_idx ){
+                    if(checkFilePermission(str2,clientsd,owner,1) == 1 && start_idx <= end_idx  && total_lines >= start_idx && total_lines >= end_idx ){
 
                         deleteIndex(str2,clientsd,start_idx,end_idx);
                         printf("Deletion completed for File %s .\n",str2);
@@ -429,7 +433,7 @@ int main(int argc , char *argv[])
                             printf("File %s does not exist.\n",str2);
                             strcpy(msg,"File does not exist.\n");
                         }
-                        else if(checkFilePermission(str2,clientsd,owner) == 0){
+                        else if(checkFilePermission(str2,clientsd,owner,1) == 0){
                             printf("Client does not have access for File %s .\n",str2);
                             strcpy(msg,"Client does not have access for File.\n");
                         }
@@ -464,8 +468,6 @@ int main(int argc , char *argv[])
 
                         soket_invite_client = getClientSoket(client_details,invite_client_id);
 
-                        // bzero(msg,sizeof(msg));
-                        // sprintf(msg,"\receive %s %d %s",str2,start_idx,str4);
                         send(soket_invite_client ,str,MAX,0);
                         bzero(msg,sizeof(msg));
 
@@ -487,6 +489,41 @@ int main(int argc , char *argv[])
                         }
                     }
                     
+                }
+                else if(strcmp(str1,"/response")==0 && valid == 2)
+                {
+                    int valid = sscanf(str,"%s %s %s %s",str1,str2,str3,str4);
+                    int permission = 0,soket_invite_client;
+
+                    if(strcmp(str3,"E")==0){
+                        permission = 2;                              // 2 = editor , 3 = viewer
+                    }
+                    else if(strcmp(str3,"V")==0){
+                        permission = 3;                             // 2 = editor , 3 = viewer
+                    }
+
+                    soket_invite_client = getFileOwnerFd(client_details,str2);
+                    bzero(msg,sizeof(msg));
+
+                    if(strcmp(str4,"Yes")==0){
+
+                        updateFileCollaborator(str2,owner,permission);
+
+                        printf("The client accecpted the invitation.\n");
+                        strcpy(msg,"The client accecpted the invitation.\n");
+                    }else{
+
+                        printf("The client declined the invitation.\n");
+                        strcpy(msg,"The client declined the invitation.\n");
+                    }
+
+                    send(soket_invite_client ,msg,MAX,0);
+
+                    if(strcmp(str4,"Yes")==0){
+                        strcpy(msg,"The invitation got accecpted.\n");
+                    }else{
+                        strcpy(msg,"The client got declined.\n");
+                    }
                 }
                 else if(strcmp(str,"/exit")==0)
                 {
@@ -679,6 +716,29 @@ void updateFileLines(char filename[]){
 }
 
 /*
+If the invite is successful, the server should send
+success messages to both C1 and C2, and maintain track of collaborators
+(and their access privilege V/E) along with owners in the permission
+records ﬁle.
+*/
+void updateFileCollaborator(char filename[],int collaborator_id,int permission){
+
+    int d = stored_file;
+    int total;
+
+    for (int i = 0; i < d; i++) 
+    {
+        if(strcmp(fileRecord[i].file_name,filename) == 0){
+            total = fileRecord[i].total_collaborators;
+            fileRecord[i].collaborators[total].collaborator_id = collaborator_id;
+            fileRecord[i].collaborators[total].permission = permission;
+            total++;
+            fileRecord[i].total_collaborators = total;
+        }
+    }
+}
+
+/*
 check filename is duplicate / exits or not .
 */
 int checkFileName(char filename[]){
@@ -711,6 +771,24 @@ int getFilelines(char filename[]){
     }
 
     return 0;
+}
+
+/*
+get file owner soket fd .
+*/
+int getFileOwnerFd(struct clientRecord client_details[],char filename[]){
+
+    int b = stored_file,owner_id = 0,socket_id = 0;
+
+    for (int i = 0; i < b; i++) 
+    {
+        if(strcmp(fileRecord[i].file_name,filename) == 0){
+            owner_id = fileRecord[i].owner;
+            socket_id = getClientSoket(client_details,owner_id);
+        }
+    }
+
+    return socket_id;
 }
 
 /*
@@ -765,6 +843,7 @@ int getClientSoket(struct clientRecord client_details[],int client_id){
     }
     return socket_id;
 }
+
 /*
 /read <filename> <start_idx> <end_idx>: Read from ﬁle ﬁlename
 starting from line index start_idx to end_idx . If only one index is speciﬁed, read
@@ -954,6 +1033,7 @@ void restore(char sourceFile[],char targetFile[]){
    fclose(source);
    fclose(target);
 }
+
 /*
 the server generates a unique 5-digit ID
 */
@@ -978,15 +1058,26 @@ int uniqueIdGenerator(int unique_number ,struct clientRecord client_details[]){
 Download the server ﬁle ﬁlename to the client, if
 given client has permission to access that ﬁle
 */
-int checkFilePermission(char filename[],int clientSocket,int owner){
+int checkFilePermission(char filename[],int clientSocket,int owner,int editorPermission){
 
     int perm = 0;
     int b = stored_file;
+    int ttl_clb = 0;
     
     for (int i = 0; i < b; i++) 
     {
         if(fileRecord[i].owner == owner && strcmp(fileRecord[i].file_name,filename) == 0){
             perm = 1;
+            return perm;
+        }else if(strcmp(fileRecord[i].file_name,filename) == 0){
+            ttl_clb = fileRecord[i].total_collaborators;
+            for (int j = 0; j < ttl_clb; j++) 
+            {
+                if(fileRecord[i].collaborators[j].collaborator_id == owner && ( editorPermission == 0 || (editorPermission == 1 && fileRecord[i].collaborators[j].permission == 2))){
+                    perm = 1;
+                    return perm;
+                }
+            }
         }
     }
     return perm;
