@@ -52,7 +52,24 @@ int main(){
 		printf("[-]Error in connection.\n");
 		exit(1);
 	}
-	printf("[+]Connected to Server(type (/exit) to exit from server).\n");
+
+    if(recv(clientSocket,msg, MAX, 0) < 0){
+    	printf("[-]Error in receiving data.\n");
+    }
+    else{
+        if(strcmp(msg,"limit_exceed") == 0){
+            printf("Client limit exceed! Wait for a while.\n");
+            close(clientSocket);
+            exit(1);
+        }
+        else{
+            printf("%s\n",msg);
+        }
+    	bzero(msg,sizeof(msg));
+    }
+
+	// printf("[+]Connected to Server(type (/exit) to exit from server).\n");
+
     while(1){
 		printf("Client: \t");
         bzero(str,sizeof(str));

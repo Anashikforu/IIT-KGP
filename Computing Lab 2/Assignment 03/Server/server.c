@@ -24,6 +24,14 @@ task ---    CL2 ASSIGNMENT 03
 #define PORT 8888
 #define CLIENT 5
 
+/*
+ﬁles that have been uploaded to the server, along with all
+details (owners, collaborators, permissions)
+*/
+struct collaborator {
+  int collaborator_id;
+  int permission;     // 2 = editor , 3 = viewer
+} ;
 
 /*
 the server generates a unique 5-digit ID
@@ -44,13 +52,14 @@ server should maintain a track of all ﬁles, the no. of lines in the ﬁle and 
 struct permissionRecord {
   int owner;
   int lines;
-  int permission;     // 1 = owner , 2 = editor , 3 = viewer
+//   int permission;     // 1 = owner , 2 = editor , 3 = viewer
+  struct collaborator collaborators[MAX];
+  int total_collaborators;
   char file_name[STR];
 } ;
 
 struct permissionRecord fileRecord[MAX];
 int stored_file = 0;
-int permitted_file = 0;
 int UNIQUEID = 10000;
 
 void upload(char filename[],int clientSocket,int owner);
@@ -153,18 +162,33 @@ int main(int argc , char *argv[])
                 perror("accept");
                 exit(EXIT_FAILURE);
             }
-            printf("New connection , socket fd is %d , ip is : %s , port : %d \n" ,newsock_fd, inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
-            for (i = 0; i < CLIENT; i++) 
-            {
-                if( client_details[i].socket_id == 0 )
+            if(connected_client < CLIENT){
+
+                bzero(msg,sizeof(msg)); 
+                strcpy(msg,"[+]Connected to Server(type (/exit) to exit from server).\n");
+                send(newsock_fd ,msg,MAX,0);
+                bzero(msg,sizeof(msg)); 
+
+                printf("New connection , socket fd is %d , ip is : %s , port : %d \n" ,newsock_fd, inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
+                for (i = 0; i < CLIENT; i++) 
                 {
-                    client_details[i].unique_id = uniqueIdGenerator( UNIQUEID ,client_details);;
-                    client_details[i].socket_id =newsock_fd;
-                    client_details[i].status = 1;
-                    printf("Adding to list of sockets as %d\n" , i);
-                    connected_client++;
-                    break;
+                    if( client_details[i].socket_id == 0 )
+                    {
+                        client_details[i].unique_id = uniqueIdGenerator( UNIQUEID ,client_details);;
+                        client_details[i].socket_id =newsock_fd;
+                        client_details[i].status = 1;
+                        printf("Adding to list of sockets as %d\n" , i);
+                        connected_client++;
+                        break;
+                    }
                 }
+            }
+            else{
+
+                bzero(msg,sizeof(msg)); 
+                strcpy(msg,"limit_exceed");
+                send(newsock_fd ,msg,MAX,0);
+                bzero(msg,sizeof(msg)); 
             }
         }
 
@@ -299,13 +323,19 @@ int main(int argc , char *argv[])
                         based on situation (ﬁle does not exist / client does not have access /
                         invalid line numbers)
                         */
-                        if(checkFilePermission(str2,clientsd,owner) == 0){
+                        if(checkFileName(str2)){
+                            printf("File %s does not exist.\n",str2);
+                            strcpy(msg,"File does not exist.\n");
+                        }
+                        else if(checkFilePermission(str2,clientsd,owner) == 0){
                             printf("Client does not have access for File %s .\n",str2);
                             strcpy(msg,"Client does not have access for File.\n");
-                        }else if(start_idx > end_idx  || total_lines < start_idx || total_lines < end_idx){
+                        }
+                        else if(start_idx > end_idx  || total_lines < start_idx || total_lines < end_idx){
                             printf("invalid line numbers for File %s .\n",str2);
                             strcpy(msg,"invalid line numbers for File.\n");
-                        }else{
+                        }
+                        else{
                             printf("File %s does not exist.\n",str2);
                             strcpy(msg,"File does not exist.\n");
                         }
@@ -333,15 +363,21 @@ int main(int argc , char *argv[])
                         based on situation (ﬁle does not exist / client does not have access /
                         invalid line numbers)
                         */
-                        if(checkFilePermission(str2,clientsd,owner) == 0){
+                        if(checkFileName(str2)){
+                            printf("File %s does not exist.\n",str2);
+                            strcpy(msg,"File does not exist.\n");
+                        }
+                        else if(checkFilePermission(str2,clientsd,owner) == 0){
                             printf("Client does not have access for File %s .\n",str2);
                             bzero(msg,sizeof(msg));
                             strcpy(msg,"Client does not have access for File.\n");
-                        }else if(total_lines < start_idx){
+                        }
+                        else if(total_lines < start_idx){
                             printf("invalid line numbers for File %s .\n",str2);
                             bzero(msg,sizeof(msg));
                             strcpy(msg,"invalid line numbers for File.\n");
-                        }else{
+                        }
+                        else{
                             printf("File %s does not exist.\n",str2);
                             bzero(msg,sizeof(msg));
                             strcpy(msg,"File does not exist.\n");
@@ -383,13 +419,19 @@ int main(int argc , char *argv[])
                         based on situation (ﬁle does not exist / client does not have access /
                         invalid line numbers)
                         */
-                        if(checkFilePermission(str2,clientsd,owner) == 0){
+                        if(checkFileName(str2)){
+                            printf("File %s does not exist.\n",str2);
+                            strcpy(msg,"File does not exist.\n");
+                        }
+                        else if(checkFilePermission(str2,clientsd,owner) == 0){
                             printf("Client does not have access for File %s .\n",str2);
                             strcpy(msg,"Client does not have access for File.\n");
-                        }else if(start_idx > end_idx  || total_lines < start_idx || total_lines < end_idx){
+                        }
+                        else if(start_idx > end_idx  || total_lines < start_idx || total_lines < end_idx){
                             printf("invalid line numbers for File %s .\n",str2);
                             strcpy(msg,"invalid line numbers for File.\n");
-                        }else{
+                        }
+                        else{
                             printf("File %s does not exist.\n",str2);
                             strcpy(msg,"File does not exist.\n");
                         }
@@ -501,18 +543,15 @@ void files(int clientSocket){
     char buffer[MAX];
     int count=0,clientsd,addrlen,b,d;
     b = stored_file;
-    d = permitted_file;
     struct sockaddr_in address;
     addrlen = sizeof(address);
     send(clientSocket,&b,sizeof(b),0);
 
-    for (int i = 0; i < d; i++) 
+    for (int i = 0; i < b; i++) 
     {
-        if(fileRecord[i].permission == 1){
-            sprintf(buffer,"File %s,owner %d ,line %d \n",fileRecord[i].file_name,fileRecord[i].owner,fileRecord[i].lines);
-            send(clientSocket,buffer,MAX,0);
-            bzero(buffer,sizeof(buffer));
-        }
+        sprintf(buffer,"File %s,owner %d ,line %d \n",fileRecord[i].file_name,fileRecord[i].owner,fileRecord[i].lines);
+        send(clientSocket,buffer,MAX,0);
+        bzero(buffer,sizeof(buffer));
     }
     recv(clientSocket,&b,sizeof(b),0);
     bzero(buffer,sizeof(buffer));
@@ -543,12 +582,11 @@ void updateFileRecord(char filename[],int owner){
         n++;
     }
 
-    strcpy(fileRecord[permitted_file].file_name,filename);
-    fileRecord[permitted_file].owner = owner;
-    fileRecord[permitted_file].lines = n;
-    fileRecord[permitted_file].permission = 1;
+    strcpy(fileRecord[stored_file].file_name,filename);
+    fileRecord[stored_file].owner = owner;
+    fileRecord[stored_file].lines = n;
+    fileRecord[stored_file].total_collaborators = 0;
     stored_file++;
-    permitted_file++;
 
     fclose(fp);
 }
@@ -562,7 +600,7 @@ void updateFileLines(char filename[]){
     int n=0,len,count,count1,j,size=0,b;
     char buffer[MAX];
     b=0;
-    int d = permitted_file;
+    int d = stored_file;
 
     fp=fopen(filename,"r");
 
@@ -594,7 +632,7 @@ check filename is duplicate / exits or not .
 */
 int checkFileName(char filename[]){
 
-    int b = permitted_file;
+    int b = stored_file;
 
     for (int i = 0; i < b; i++) 
     {
@@ -612,7 +650,7 @@ get file total lines .
 */
 int getFilelines(char filename[]){
 
-    int b = permitted_file;
+    int b = stored_file;
 
     for (int i = 0; i < b; i++) 
     {
@@ -865,11 +903,11 @@ given client has permission to access that ﬁle
 int checkFilePermission(char filename[],int clientSocket,int owner){
 
     int perm = 0;
-    int b = permitted_file;
+    int b = stored_file;
     
     for (int i = 0; i < b; i++) 
     {
-        if(fileRecord[i].permission == 1 && fileRecord[i].owner == owner && strcmp(fileRecord[i].file_name,filename) == 0){
+        if(fileRecord[i].owner == owner && strcmp(fileRecord[i].file_name,filename) == 0){
             perm = 1;
         }
     }
