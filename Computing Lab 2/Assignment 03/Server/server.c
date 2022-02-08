@@ -483,17 +483,17 @@ int main(int argc , char *argv[])
                         strcpy(msg,"Invitation sent to Client.\n");
                     }else{
 
-                        if(checkFilePermission(str2,soket_invite_client,invite_client_id,edit_permission) == 0){
-                            printf("The Client %d already has the permission.\n",invite_client_id);
-                            strcpy(msg,"The Client already has the permission.\n");
-                        }
-                        else if(checkFileName(str2) == 1){
+                        if(checkFileName(str2) == 1){
                             printf("File %s does not exist.\n",str2);
                             strcpy(msg,"File does not exist.\n");
                         }
                         else if(checkClientStatus(client_details,invite_client_id) == 0){
                             printf("Invited Client %d does not exist.\n",invite_client_id);
                             strcpy(msg,"Invited Client does not exist.\n");
+                        }
+                        else if(checkFilePermission(str2,soket_invite_client,invite_client_id,edit_permission) == 1){
+                            printf("The Client %d already has the permission.\n",invite_client_id);
+                            strcpy(msg,"The Client already has the permission.\n");
                         }
                         else{
                             printf("Wrong command received.\n");
@@ -770,6 +770,7 @@ void updateFileCollaborator(char filename[],int collaborator_id,int permission){
             {
                 if(fileRecord[i].collaborators[j].collaborator_id == collaborator_id){
                     fileRecord[i].collaborators[j].permission = permission;
+                    update == 1;
                 }
             }
             if(update == 0){
