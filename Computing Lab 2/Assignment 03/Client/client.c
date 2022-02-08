@@ -2,7 +2,7 @@
 /*
 Author ---  Md Ashik Khan
 ID --- 21CS60A02
-task ---    CL2 ASSIGNMENT 03
+task ---    CL2 ASSIGNMENT 03 Client Part
 */
 
 #include <stdio.h>
@@ -24,16 +24,6 @@ void download(char filename[],int clientSocket);
 void files(int clientSocket);
 void users(int clientSocket);
 void readIndex(int clientSocket);
-
-void print_error(char *msg)
-{
-	perror(msg);
-	exit(0);
-}
-void print_msg(char *msg)
-{
-	puts(msg);
-}
 
 int main(){
 
@@ -134,17 +124,22 @@ int main(){
 				
 				printf("Server:  Response sent succesfully.\n");
 			}
+            else if(strlen(msg) == 0){
+                close(clientSocket);
+                printf("[-]Disconnected from server.\n");
+                exit(1);
+            }
             else{
                 printf("Server:  %s\n", msg);
             }
 
 			fflush(stdout);
-			// printf("Client2: \t");
+			// printf("Client: \t");
         }
 
         if (FD_ISSET( 0 , &readfds)) 
         {
-            // printf("Client1: \t");
+            // printf("Client: \t");
             bzero(str,sizeof(str));
             n = 0; 
             while ((str[n++] = getchar()) != '\n') 

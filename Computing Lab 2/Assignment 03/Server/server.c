@@ -2,7 +2,7 @@
 /*
 Author ---  Md Ashik Khan
 ID --- 21CS60A02
-task ---    CL2 ASSIGNMENT 03
+task ---    CL2 ASSIGNMENT 03 Server Part
 */
 
 #include<stdio.h>
@@ -451,7 +451,7 @@ int main(int argc , char *argv[])
                 else if(strcmp(str1,"/invite")==0 && valid == 3)
                 {
                     int valid = sscanf(str,"%s %s %d %s\n",str1,str2,&start_idx,str4);
-                    int invite_client_id,permission,soket_invite_client;
+                    int invite_client_id,permission,soket_invite_client,edit_permission;
 
                     if(strcmp(str4,"E")==0){
                         permission = 2;                              // 2 = editor , 3 = viewer
@@ -465,9 +465,16 @@ int main(int argc , char *argv[])
 
                     invite_client_id = start_idx;
 
-                    if(checkFileName(str2) == 0 && (permission == 2 || permission == 3) && checkClientStatus(client_details,invite_client_id) == 1){
+                    soket_invite_client = getClientSoket(client_details,invite_client_id);
 
-                        soket_invite_client = getClientSoket(client_details,invite_client_id);
+                    if(permission == 2){
+                        edit_permission = 1;
+                    }
+                    else{
+                        edit_permission = 0;
+                    }
+
+                    if(checkFileName(str2) == 0 && (permission == 2 || permission == 3) && checkClientStatus(client_details,invite_client_id) == 1 && checkFilePermission(str2,soket_invite_client,invite_client_id,edit_permission) == 0){
 
                         send(soket_invite_client ,str,MAX,0);
                         bzero(msg,sizeof(msg));
@@ -475,7 +482,12 @@ int main(int argc , char *argv[])
                         printf("Invitation sent to Client %d for File %s \n",invite_client_id,str2);
                         strcpy(msg,"Invitation sent to Client.\n");
                     }else{
-                        if(checkFileName(str2) == 1){
+
+                        if(checkFilePermission(str2,soket_invite_client,invite_client_id,edit_permission) == 0){
+                            printf("The Client %d already has the permission.\n",invite_client_id);
+                            strcpy(msg,"The Client already has the permission.\n");
+                        }
+                        else if(checkFileName(str2) == 1){
                             printf("File %s does not exist.\n",str2);
                             strcpy(msg,"File does not exist.\n");
                         }
@@ -724,6 +736,10 @@ void updateFileLines(char filename[]){
         n++;
     }
 
+    if(strlen(buffer) == 0 && n == 1){
+        n = 0;
+    }
+
     for (int i = 0; i < d; i++) 
     {
         if(strcmp(fileRecord[i].file_name,filename) == 0){
@@ -743,22 +759,31 @@ records ﬁle.
 void updateFileCollaborator(char filename[],int collaborator_id,int permission){
 
     int d = stored_file;
-    int total;
+    int total,update = 0;
 
     for (int i = 0; i < d; i++) 
     {
         if(strcmp(fileRecord[i].file_name,filename) == 0){
+
             total = fileRecord[i].total_collaborators;
-            fileRecord[i].collaborators[total].collaborator_id = collaborator_id;
-            fileRecord[i].collaborators[total].permission = permission;
-            total++;
-            fileRecord[i].total_collaborators = total;
+            for (int j = 0; j < total; j++) 
+            {
+                if(fileRecord[i].collaborators[j].collaborator_id == collaborator_id){
+                    fileRecord[i].collaborators[j].permission = permission;
+                }
+            }
+            if(update == 0){
+                fileRecord[i].collaborators[total].collaborator_id = collaborator_id;
+                fileRecord[i].collaborators[total].permission = permission;
+                total++;
+                fileRecord[i].total_collaborators = total;
+            }
         }
     }
 }
 
 /*
-check filename is duplicate / exits or not .
+check filename is duplicate / exits or not 
 */
 int checkFileName(char filename[]){
 
@@ -776,7 +801,7 @@ int checkFileName(char filename[]){
 }
 
 /*
-get file total lines .
+get file total lines 
 */
 int getFilelines(char filename[]){
 
@@ -793,7 +818,7 @@ int getFilelines(char filename[]){
 }
 
 /*
-get file owner soket fd .
+get file owner soket fd 
 */
 int getFileOwnerFd(struct clientRecord client_details[],char filename[]){
 
