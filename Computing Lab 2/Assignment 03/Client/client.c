@@ -25,6 +25,9 @@ void files(int clientSocket);
 void users(int clientSocket);
 void readIndex(int clientSocket);
 
+int validateCommand(char command[]);
+int fileExits(char filename[]);
+
 int main(){
 
 	int clientSocket,fd,invite_owner;
@@ -33,7 +36,7 @@ int main(){
 	struct sockaddr_in serverAddr;
     char msg[MAX],buffer[MAX];
     char str[MAX],str1[STR],str2[STR],str3[STR],str4[STR];
-	int n,len,count,j,size=0,b,validation;
+	int n,len,count,j,size=0,b,validation,start_idx,end_idx;
     fd_set readfds;
 
 	clientSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -41,7 +44,6 @@ int main(){
 		printf("[-]Error in connection.\n");
 		exit(1);
 	}
-	printf("[+]Client Socket is created.\n");
 
 	memset(&serverAddr, '\0', sizeof(serverAddr));
 	serverAddr.sin_family = AF_INET;
@@ -58,12 +60,15 @@ int main(){
     	printf("[-]Error in receiving data.\n");
     }
     else{
+
         if(strcmp(msg,"limit_exceed") == 0){
             printf("Client limit exceed! Wait for a while.\n");
             close(clientSocket);
             exit(1);
         }
         else{
+
+	        printf("[+]Client Socket is created.\n");
             printf("%s\n",msg);
         }
     	bzero(msg,sizeof(msg));
@@ -149,19 +154,32 @@ int main(){
 
             bzero(str1,sizeof(str1));  
             bzero(str2,sizeof(str2));
-            validation = sscanf(str,"%s %s",str1,str2);
+            validation = sscanf(str,"%s %s %d %d",str1,str2,&start_idx,&end_idx);
 
-            if(strcmp(str1,"/upload")==0 && validation == 2)
+            if(strcmp(str1,"/upload")==0 && validateCommand(str) == 1 && validation == 2)
             {
-                bzero(buffer,sizeof(buffer));
-                recv(clientSocket,buffer, MAX, 0);
-                if(strcmp(buffer,"Send")==0){
-                    upload(str2,clientSocket);
-                }else if(strcmp(buffer,"Duplicate")==0){
+                if(fileExits(str2) == 1){
+                    bzero(buffer,sizeof(buffer));
+                    strcpy(buffer,"EXIST");
+                    send(clientSocket,buffer,strlen(buffer),0);
+                    usleep(9000);
+                    
 
+                    bzero(buffer,sizeof(buffer));
+                    recv(clientSocket,buffer, MAX, 0);
+                    if(strcmp(buffer,"Send")==0){
+                        upload(str2,clientSocket);
+                    }else if(strcmp(buffer,"Duplicate")==0){
+
+                    }
+                }else{
+                    bzero(buffer,sizeof(buffer));
+                    strcpy(buffer,"WRONG");
+                    send(clientSocket,buffer,strlen(buffer),0);
+                    usleep(9000);
                 }
             }
-            else if(strcmp(str1,"/download")==0 && validation == 2)
+            else if(strcmp(str1,"/download")==0 && validateCommand(str) == 1 && validation == 2)
             {
                 bzero(buffer,sizeof(buffer));
                 recv(clientSocket,buffer, MAX, 0);
@@ -179,7 +197,7 @@ int main(){
             {
                 users(clientSocket);
             }
-            else if(strcmp(str1,"/read")==0)
+            else if(strcmp(str1,"/read")==0 && validateCommand(str) == 1)
             {
                 bzero(buffer,sizeof(buffer));
                 recv(clientSocket,buffer, MAX, 0);
@@ -234,6 +252,7 @@ void upload(char filename[],int clientSocket){
 	while(fgets(buffer,sizeof(buffer),fp))
 	{
 		send(clientSocket,buffer,strlen(buffer),0);
+        usleep(9000);
 		bzero(buffer,sizeof(buffer));
 	}
 	recv(clientSocket,&b,sizeof(b),0);
@@ -348,4 +367,55 @@ void users(int clientSocket){
     }
     send(clientSocket,&b,sizeof(b),0);
     bzero(buffer,sizeof(buffer));
+}
+
+/*
+Validate the client inputed command
+*/
+int validateCommand(char command[]){
+
+    char str1[STR],str2[STR],str3[STR],str4[STR];
+    int start_idx,end_idx,valid,readVal,upVAl;
+
+    valid = sscanf(command,"%s %s %s %[^\n]",str1,str2,str3,str4);
+
+    if((strcmp(str1,"/upload") || strcmp(str1,"/download")) && valid == 2){
+        return 1;
+    }
+    else if((strcmp(str1,"/read") || strcmp(str1,"/delete")) && valid >= 2){
+        if(valid == 2){
+            return 1;
+        }else if(valid == 3){
+            readVal = sscanf(command,"%s %s %d %[^\n]",str1,str2,&start_idx,str3);
+            if(readVal == 3){
+                return 1;
+            }else{
+                return 0;
+            }
+        }else if(valid == 4){
+            readVal = sscanf(command,"%s %s %d %d %[^\n]",str1,str2,&start_idx,&end_idx,str3);
+            if(readVal == 4){
+                return 1;
+            }else{
+                return 0;
+            }
+        }
+    }
+    else{
+        return 0;
+    }
+
+}
+
+/*
+Check to be uploaded file exits or not . 
+*/
+int fileExits(char filename[]){
+    FILE *fp;
+	fp=fopen(filename,"r");
+	if(!fp)
+	{
+		return 0;
+	}
+    return 1;
 }

@@ -22,7 +22,7 @@ task ---    CL2 ASSIGNMENT 03 Server Part
 #define MAX 1024
 #define STR 256
 #define PORT 8888
-#define CLIENT 2
+#define CLIENT 5
 
 /*
 ﬁles that have been uploaded to the server, along with all
@@ -80,6 +80,7 @@ int getFileOwnerFd(struct clientRecord client_details[],char filename[]);
 int checkClientStatus(struct clientRecord client_details[],int client_id);
 int getClientSoket(struct clientRecord client_details[],int client_id);
 int checkFilePermission(char filename[],int clientSocket,int owner,int editorPermission);
+int validateCommand(char command[]);
 
 int main(int argc , char *argv[])
 {
@@ -167,9 +168,6 @@ int main(int argc , char *argv[])
             if(connected_client < CLIENT){
 
                 bzero(msg,sizeof(msg)); 
-                strcpy(msg,"[+]Connected to Server(type (/exit) to exit from server).\n");
-                send(newsock_fd ,msg,MAX,0);
-                bzero(msg,sizeof(msg)); 
 
                 printf("New connection , socket fd is %d , ip is : %s , port : %d \n" ,newsock_fd, inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
                 for (i = 0; i < CLIENT; i++) 
@@ -179,7 +177,11 @@ int main(int argc , char *argv[])
                         client_details[i].unique_id = uniqueIdGenerator( UNIQUEID ,client_details);;
                         client_details[i].socket_id =newsock_fd;
                         client_details[i].status = 1;
-                        printf("Adding to list of sockets as %d\n" , i);
+                        printf("Adding to list of CLients as %d\n" , client_details[i].unique_id);
+
+                        sprintf(msg,"[+]Adding to list of CLients as %d.\n[+]Connected to Server(type (/exit) to exit from server).\n",client_details[i].unique_id);
+                        send(newsock_fd ,msg,MAX,0);
+                        bzero(msg,sizeof(msg)); 
                         connected_client++;
                         break;
                     }
@@ -223,35 +225,50 @@ int main(int argc , char *argv[])
                 bzero(str2,sizeof(str2));  
                 bzero(str3,sizeof(str3));  
                 bzero(str4,sizeof(str4));  
+
                 int valid = sscanf(str,"%s %s %d %d",str1,str2,&start_idx,&end_idx);
+                int editor_permission = 0;
 
                 // editor permission = 1 for Insert and Delete
                 // editor permission = 0 for Read and Download
 
                 printf("%s command received from client.\n",str);
-                if(strcmp(str1,"/upload")==0 && valid == 2)
-                {   
-                    if(checkFileName(str2) == 1){
-                        strcpy(msg,"Send");
-                        send(clientsd ,msg,MAX,0);
-                        bzero(msg,sizeof(msg));
 
-                        upload(str2,clientsd,owner);
-
-                        printf("File %s stored Successfully.\n",str2);
-                        strcpy(msg,"Successfully uploaded the file.\n");
-                    }else{
-                        strcpy(msg,"Duplicate");
-                        send(clientsd ,msg,MAX,0);
-                        bzero(msg,sizeof(msg));
-
-                        printf("Duplicate Filename %s .\n",str2);
-                        strcpy(msg,"Duplicate Filename.Please upload file with a unique filename.\n");
-                    }
-                }
-                else if(strcmp(str1,"/download")==0 && valid == 2)
+                if(strcmp(str1,"/upload")==0 && validateCommand(str) == 1 && valid == 2)
                 {
-                    if(checkFilePermission(str2,clientsd,owner,0) == 1){
+                    bzero(buffer,sizeof(buffer));
+                    recv(clientsd,buffer, MAX, 0);
+                    if(strcmp(buffer,"EXIST")==0){
+                      
+                        if(checkFileName(str2) == 1){
+                            strcpy(msg,"Send");
+                            send(clientsd ,msg,MAX,0);
+                            bzero(msg,sizeof(msg));
+
+                            upload(str2,clientsd,owner);
+
+                            printf("File %s stored Successfully.\n",str2);
+                            strcpy(msg,"Successfully uploaded the file.\n");
+                        }else{
+                            strcpy(msg,"Duplicate");
+                            send(clientsd ,msg,MAX,0);
+                            bzero(msg,sizeof(msg));
+
+                            printf("Duplicate Filename %s .\n",str2);
+                            strcpy(msg,"Duplicate Filename.Please upload file with a unique filename.\n");
+                        }
+
+                    }else if(strcmp(buffer,"WRONG")==0){
+
+                        printf("Error in opening File %s.\n",str2);
+                        strcpy(msg,"Error in opening File .\n");
+                    } 
+                }
+                else if(strcmp(str1,"/download")==0 && validateCommand(str) == 1 && valid == 2)
+                {
+                    editor_permission = 0;
+
+                    if(checkFilePermission(str2,clientsd,owner,editor_permission) == 1){
                         strcpy(msg,"permission_granted");
                         send(clientsd ,msg,MAX,0);
                         bzero(msg,sizeof(msg));
@@ -283,9 +300,10 @@ int main(int argc , char *argv[])
                     users(client_details,connected_client,clientsd);
                     strcpy(msg,"User listing completed.\n");
                 }
-                else if(strcmp(str1,"/read")==0 && valid >= 2)
+                else if(strcmp(str1,"/read")==0 && validateCommand(str) == 1)
                 {
                     int total_lines = getFilelines(str2);
+                    editor_permission = 0;
 
                     //If only one index is speciﬁed, read that line.
                     if(valid == 3){
@@ -306,7 +324,7 @@ int main(int argc , char *argv[])
                         end_idx += total_lines;
                     }
 
-                    if(checkFilePermission(str2,clientsd,owner,0) == 1 && start_idx <= end_idx  && total_lines >= start_idx && total_lines >= end_idx ){
+                    if(checkFilePermission(str2,clientsd,owner,editor_permission) == 1 && start_idx <= end_idx  && total_lines >= start_idx && total_lines >= end_idx && start_idx >= 0  && end_idx >= 0 && total_lines > 0){
                         strcpy(msg,"permission_granted");
                         send(clientsd ,msg,MAX,0);
                         bzero(msg,sizeof(msg));
@@ -327,23 +345,28 @@ int main(int argc , char *argv[])
                             printf("File %s does not exist.\n",str2);
                             strcpy(msg,"File does not exist.\n");
                         }
-                        else if(checkFilePermission(str2,clientsd,owner,0) == 0){
+                        else if(checkFilePermission(str2,clientsd,owner,editor_permission) == 0){
                             printf("Client does not have access for File %s .\n",str2);
                             strcpy(msg,"Client does not have access for File.\n");
                         }
-                        else if(start_idx > end_idx  || total_lines < start_idx || total_lines < end_idx){
+                        else if(start_idx > end_idx  || total_lines < start_idx || total_lines < end_idx || start_idx < 0  || end_idx < 0){
                             printf("invalid line numbers for File %s .\n",str2);
                             strcpy(msg,"invalid line numbers for File.\n");
                         }
+                        else if( total_lines == 0){
+                            printf("File %s is empty.\n",str2);
+                            strcpy(msg,"File is empty.\n");
+                        }
                         else{
-                            printf("File %s does not exist.\n",str2);
-                            strcpy(msg,"File does not exist.\n");
+                            printf("Wrong Command.\n");
+                            strcpy(msg,"Wrong Command.\n");
                         }
                     }
                 }
                 else if(strcmp(str1,"/insert")==0 && valid >= 2)
                 {  
                     int last_insert = 0;
+                    editor_permission = 1;
 
                     valid = sscanf(str,"%s %s %d %[^\n]",str1,str2,&start_idx,str4);
 
@@ -362,7 +385,7 @@ int main(int argc , char *argv[])
                         start_idx += total_lines;
                     }
 
-                    if((valid == 4 || (valid == 3 && last_insert == 1)) && total_lines >= start_idx && checkFilePermission(str2,clientsd,owner,1) == 1 ){
+                    if((valid == 4 || (valid == 3 && last_insert == 1)) && total_lines >= start_idx && checkFilePermission(str2,clientsd,owner,editor_permission) == 1 && strlen(str4) > 0){
     
                             insertIndex(str2,clientsd,start_idx,str4);
                             strcpy(msg,"File inserting completed.\n");
@@ -378,7 +401,7 @@ int main(int argc , char *argv[])
                             printf("File %s does not exist.\n",str2);
                             strcpy(msg,"File does not exist.\n");
                         }
-                        else if(checkFilePermission(str2,clientsd,owner,1) == 0){
+                        else if(checkFilePermission(str2,clientsd,owner,editor_permission) == 0){
                             printf("Client does not have access for File %s .\n",str2);
                             bzero(msg,sizeof(msg));
                             strcpy(msg,"Client does not have access for File.\n");
@@ -388,6 +411,10 @@ int main(int argc , char *argv[])
                             bzero(msg,sizeof(msg));
                             strcpy(msg,"invalid line numbers for File.\n");
                         }
+                        else if(strlen(str4) > 0){
+                            printf("Empty message.\n");
+                            strcpy(msg,"Empty message.\n");
+                        }
                         else{
                             printf("File %s does not exist.\n",str2);
                             bzero(msg,sizeof(msg));
@@ -395,9 +422,10 @@ int main(int argc , char *argv[])
                         }
                     }
                 }
-                else if(strcmp(str1,"/delete")==0 && valid >= 2)
+                else if(strcmp(str1,"/delete")==0 && validateCommand(str) == 1)
                 {
                     int total_lines = getFilelines(str2);
+                    editor_permission = 1;
 
                     //If only one index is speciﬁed, read that line.
                     if(valid == 3){
@@ -418,8 +446,7 @@ int main(int argc , char *argv[])
                         end_idx += total_lines;
                     }
 
-                    if(checkFilePermission(str2,clientsd,owner,1) == 1 && start_idx <= end_idx  && total_lines >= start_idx && total_lines >= end_idx ){
-
+                    if(checkFilePermission(str2,clientsd,owner,editor_permission) == 1 && start_idx <= end_idx  && total_lines >= start_idx && total_lines >= end_idx && start_idx >= 0  && end_idx >= 0 && total_lines > 0){
                         deleteIndex(str2,clientsd,start_idx,end_idx);
                         printf("Deletion completed for File %s .\n",str2);
                         strcpy(msg,"File deletion completed.\n");
@@ -434,19 +461,24 @@ int main(int argc , char *argv[])
                             printf("File %s does not exist.\n",str2);
                             strcpy(msg,"File does not exist.\n");
                         }
-                        else if(checkFilePermission(str2,clientsd,owner,1) == 0){
+                        else if(checkFilePermission(str2,clientsd,owner,editor_permission) == 0){
                             printf("Client does not have access for File %s .\n",str2);
                             strcpy(msg,"Client does not have access for File.\n");
                         }
-                        else if(start_idx > end_idx  || total_lines < start_idx || total_lines < end_idx){
+                        else if(start_idx > end_idx  || total_lines < start_idx || total_lines < end_idx || start_idx < 0  || end_idx < 0){
                             printf("invalid line numbers for File %s .\n",str2);
                             strcpy(msg,"invalid line numbers for File.\n");
                         }
+                        else if( total_lines == 0){
+                            printf("File %s is empty.\n",str2);
+                            strcpy(msg,"File is empty.\n");
+                        }
                         else{
-                            printf("File %s does not exist.\n",str2);
-                            strcpy(msg,"File does not exist.\n");
+                            printf("Wrong Command.\n");
+                            strcpy(msg,"Wrong Command.\n");
                         }
                     }
+
                 }
                 else if(strcmp(str1,"/invite")==0 && valid == 3)
                 {
@@ -538,6 +570,12 @@ int main(int argc , char *argv[])
                         strcpy(msg,"The client got declined.\n");
                     }
                 }
+                else if(strcmp(str,"/profile")==0)
+                {
+                    printf("Wrong command received.\n");
+                    bzero(msg,sizeof(msg));
+                    sprintf(msg,"Profile Unique ID %d .\n",owner);
+                }
                 else if(strcmp(str,"/exit")==0)
                 {
                     printf("Client disconnected.\n");
@@ -555,6 +593,7 @@ int main(int argc , char *argv[])
                     strcpy(msg,"Wrong command.\n");
                 }
                 send(clientsd ,msg,MAX,0);
+                usleep(9000);
                 bzero(msg,sizeof(msg));                     
             
             }
@@ -628,6 +667,7 @@ void download(char filename[],int clientSocket){
     while(fgets(buffer,sizeof(buffer),fp))
     {
         send(clientSocket,buffer,MAX,0);
+        usleep(9000);
         bzero(buffer,sizeof(buffer));
     }
     recv(clientSocket,&b,sizeof(b),0);
@@ -770,10 +810,13 @@ void updateFileCollaborator(char filename[],int collaborator_id,int permission){
             {
                 if(fileRecord[i].collaborators[j].collaborator_id == collaborator_id){
                     fileRecord[i].collaborators[j].permission = permission;
-                    update == 1;
+                    update = 1;
                 }
             }
-            if(update == 0){
+            if(update == 1){
+                break;
+            }
+            else if(update == 0){
                 fileRecord[i].collaborators[total].collaborator_id = collaborator_id;
                 fileRecord[i].collaborators[total].permission = permission;
                 total++;
@@ -1097,6 +1140,44 @@ int uniqueIdGenerator(int unique_number ,struct clientRecord client_details[]){
     }
 
     return unique_number;
+}
+
+/*
+Validate the client inputed command
+*/
+int validateCommand(char command[]){
+
+    char str1[STR],str2[STR],str3[STR],str4[STR];
+    int start_idx,end_idx,valid,readVal,upVAl;
+
+    valid = sscanf(command,"%s %s %s %[^\n]",str1,str2,str3,str4);
+
+    if((strcmp(str1,"/upload") || strcmp(str1,"/download")) && valid == 2){
+        return 1;
+    }
+    else if((strcmp(str1,"/read") || strcmp(str1,"/delete")) && valid >= 2){
+        if(valid == 2){
+            return 1;
+        }else if(valid == 3){
+            readVal = sscanf(command,"%s %s %d %[^\n]",str1,str2,&start_idx,str3);
+            if(readVal == 3){
+                return 1;
+            }else{
+                return 0;
+            }
+        }else if(valid == 4){
+            readVal = sscanf(command,"%s %s %d %d %[^\n]",str1,str2,&start_idx,&end_idx,str3);
+            if(readVal == 4){
+                return 1;
+            }else{
+                return 0;
+            }
+        }
+    }
+    else{
+        return 0;
+    }
+
 }
 
 /*
