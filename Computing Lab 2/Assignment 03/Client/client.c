@@ -122,7 +122,7 @@ int main(){
                 
                 printf("Server:  CLIENT %d is inviting you as %s of %s\n", invite_owner,str3,str2);
 				
-				fprintf(stdout, "Valid Response: Yes No \n");
+				fprintf(stdout, "Valid Response: [Yes] [No] \n");
 				bzero(str3, strlen(str3));
 				bzero(msg, strlen(msg));
 				n = 0; 
@@ -151,16 +151,6 @@ int main(){
             ; 
             str[n-1]='\0';
             write(clientSocket,str,strlen(str));
-            // len=strlen(str);
-            // count=0;
-            // for(j=0;j<len;j++)
-            // {
-            //     if(str[j]==' ')
-            //         break;
-            //     else
-            //         str1[count++]=str[j];
-            // }
-            // str1[count]='\0';
 
             bzero(str1,sizeof(str1));  
             bzero(str2,sizeof(str2));
@@ -292,18 +282,29 @@ details (owners, collaborators, permissions), and the no. of lines in the ﬁle.
 */
 void files(int clientSocket){
     char buffer[MAX];
-    int clientsd,b,addrlen;
+    int clientsd,b,d,addrlen;
     struct sockaddr_in address;
 
     recv(clientSocket,&b,sizeof(b),0);
     printf("Server:  \n\tStored Files :  %d \n",b);
 
     bzero(buffer,sizeof(buffer));
+
     for (int i = 0; i < b; i++) 
     {
         recv(clientSocket,buffer, MAX, 0);
         printf("\t%d.%s\n" , i+1,buffer);
         bzero(buffer,sizeof(buffer));
+
+        recv(clientSocket,&d,sizeof(d),0);
+        printf("\t\tCollaborators: %d \n",d);
+
+        for (int j = 0; j < d; j++) 
+        {
+            recv(clientSocket,buffer, MAX, 0);
+            printf("\t\t%d.%s\n" , j+1,buffer);
+            bzero(buffer,sizeof(buffer));
+        }
     }
     send(clientSocket,&b,sizeof(b),0);
     bzero(buffer,sizeof(buffer));

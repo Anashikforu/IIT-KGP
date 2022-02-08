@@ -218,16 +218,6 @@ int main(int argc , char *argv[])
                 
                 printf("\n");
 
-                // n=strlen(str);
-                // count=0;
-                // for(j=0;j<n;j++)
-                // {
-                //     if(str[j]==' ')
-                //         break;
-                //     else
-                //         str1[count++]=str[j];
-                // }
-                // str1[count]='\0';
                 
                 bzero(str1,sizeof(str1));  
                 bzero(str2,sizeof(str2));  
@@ -351,17 +341,28 @@ int main(int argc , char *argv[])
                         }
                     }
                 }
-                else if(strcmp(str1,"/insert")==0 && valid == 3)
-                {
-                    int valid = sscanf(str,"%s %s %d %[^\n]",str1,str2,&start_idx,str4);
+                else if(strcmp(str1,"/insert")==0 && valid >= 2)
+                {  
+                    int last_insert = 0;
+
+                    valid = sscanf(str,"%s %s %d %[^\n]",str1,str2,&start_idx,str4);
+
+                    if(valid == 2){
+                        valid = sscanf(str,"%s %s %[^\n]",str1,str2,str4);
+                        last_insert = 1;
+                    }
 
                     int total_lines = getFilelines(str2);
+
+                    if(last_insert == 1){
+                        start_idx = total_lines;
+                    }
 
                     if(start_idx < 0 ){
                         start_idx += total_lines;
                     }
 
-                    if(valid == 4 && total_lines >= start_idx && checkFilePermission(str2,clientsd,owner,1) == 1 ){
+                    if((valid == 4 || (valid == 3 && last_insert == 1)) && total_lines >= start_idx && checkFilePermission(str2,clientsd,owner,1) == 1 ){
     
                             insertIndex(str2,clientsd,start_idx,str4);
                             strcpy(msg,"File inserting completed.\n");
@@ -509,8 +510,8 @@ int main(int argc , char *argv[])
 
                         updateFileCollaborator(str2,owner,permission);
 
-                        printf("The client accecpted the invitation.\n");
-                        strcpy(msg,"The client accecpted the invitation.\n");
+                        printf("The client has accecpted the invitation.\n");
+                        strcpy(msg,"The client has accecpted the invitation.\n");
                     }else{
 
                         printf("The client declined the invitation.\n");
@@ -628,7 +629,7 @@ void download(char filename[],int clientSocket){
 details (owners, collaborators, permissions), and the no. of lines in the ﬁle.
 */
 void files(int clientSocket){
-    char buffer[MAX];
+    char buffer[MAX],permit[STR];
     int count=0,clientsd,addrlen,b,d;
     b = stored_file;
     struct sockaddr_in address;
@@ -637,9 +638,27 @@ void files(int clientSocket){
 
     for (int i = 0; i < b; i++) 
     {
-        sprintf(buffer,"File %s,owner %d ,line %d \n",fileRecord[i].file_name,fileRecord[i].owner,fileRecord[i].lines);
+        sprintf(buffer,"File %s,OWNER %d ,LINES %d",fileRecord[i].file_name,fileRecord[i].owner,fileRecord[i].lines);
         send(clientSocket,buffer,MAX,0);
         bzero(buffer,sizeof(buffer));
+
+        d = fileRecord[i].total_collaborators;
+        send(clientSocket,&d,sizeof(d),0);
+
+        for (int j = 0; j < d; j++) 
+        {
+            bzero(permit,sizeof(permit));
+
+            if(fileRecord[i].collaborators[j].permission == 2){
+                sprintf(permit,"EDITOR");
+            }else if(fileRecord[i].collaborators[j].permission == 3){
+                sprintf(permit,"VIEWER");
+            }
+
+            sprintf(buffer,"Collaborator %d ,Permission %s",fileRecord[i].collaborators[j].collaborator_id ,permit);
+            send(clientSocket,buffer,MAX,0);
+            bzero(buffer,sizeof(buffer));
+        }
     }
     recv(clientSocket,&b,sizeof(b),0);
     bzero(buffer,sizeof(buffer));
