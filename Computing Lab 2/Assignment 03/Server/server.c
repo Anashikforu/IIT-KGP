@@ -329,7 +329,7 @@ int main(int argc , char *argv[])
                         end_idx += total_lines;
                     }
 
-                    if(checkFilePermission(str2,clientsd,owner,editor_permission) == 1 && start_idx <= end_idx  && total_lines >= start_idx && total_lines >= end_idx && start_idx >= 0  && end_idx >= 0 && total_lines > 0){
+                    if(checkFilePermission(str2,clientsd,owner,editor_permission) == 1 && start_idx <= end_idx  && total_lines > start_idx && total_lines > end_idx && start_idx >= 0  && end_idx >= 0 && total_lines > 0){
                         strcpy(msg,"permission_granted");
                         send(clientsd ,msg,MAX,0);
                         bzero(msg,sizeof(msg));
@@ -354,13 +354,13 @@ int main(int argc , char *argv[])
                             printf("Client does not have access for File %s .\n",str2);
                             strcpy(msg,"Client does not have access for File.\n");
                         }
-                        else if(start_idx > end_idx  || total_lines < start_idx || total_lines < end_idx || start_idx < 0  || end_idx < 0){
-                            printf("invalid line numbers for File %s .\n",str2);
-                            strcpy(msg,"invalid line numbers for File.\n");
-                        }
                         else if( total_lines == 0){
                             printf("File %s is empty.\n",str2);
                             strcpy(msg,"File is empty.\n");
+                        }
+                        else if(start_idx > end_idx  || total_lines <= start_idx || total_lines <= end_idx || start_idx < 0  || end_idx < 0){
+                            printf("invalid line numbers for File %s .\n",str2);
+                            strcpy(msg,"invalid line numbers for File.\n");
                         }
                         else{
                             printf("Wrong Command.\n");
@@ -451,7 +451,7 @@ int main(int argc , char *argv[])
                         end_idx += total_lines;
                     }
 
-                    if(checkFilePermission(str2,clientsd,owner,editor_permission) == 1 && start_idx <= end_idx  && total_lines >= start_idx && total_lines >= end_idx && start_idx >= 0  && end_idx >= 0 && total_lines > 0){
+                    if(checkFilePermission(str2,clientsd,owner,editor_permission) == 1 && start_idx <= end_idx  && total_lines > start_idx && total_lines > end_idx && start_idx >= 0  && end_idx >= 0 && total_lines > 0){
                         deleteIndex(str2,clientsd,start_idx,end_idx);
                         printf("Deletion completed for File %s .\n",str2);
                         strcpy(msg,"File deletion completed.\n");
@@ -470,13 +470,13 @@ int main(int argc , char *argv[])
                             printf("Client does not have access for File %s .\n",str2);
                             strcpy(msg,"Client does not have access for File.\n");
                         }
-                        else if(start_idx > end_idx  || total_lines < start_idx || total_lines < end_idx || start_idx < 0  || end_idx < 0){
-                            printf("invalid line numbers for File %s .\n",str2);
-                            strcpy(msg,"invalid line numbers for File.\n");
-                        }
                         else if( total_lines == 0){
                             printf("File %s is empty.\n",str2);
                             strcpy(msg,"File is empty.\n");
+                        }
+                        else if(start_idx > end_idx  || total_lines <= start_idx || total_lines <= end_idx || start_idx < 0  || end_idx < 0){
+                            printf("invalid line numbers for File %s .\n",str2);
+                            strcpy(msg,"invalid line numbers for File.\n");
                         }
                         else{
                             printf("Wrong Command.\n");
@@ -528,7 +528,7 @@ int main(int argc , char *argv[])
                         }
                         else if(checkFilePermission(str2,clientsd,owner,owner_permission) == 0 && valid == 4){
                             printf("The Client %d is not the owner of the File %s.\n",owner,str2);
-                            strcpy(msg,"The Client %d is not the owner of the File.\n");
+                            strcpy(msg,"You are not the owner of the File.\n");
                         }
                         else if(checkClientStatus(client_details,invite_client_id) == 0 && valid == 4){
                             printf("Invited Client %d does not exist.\n",invite_client_id);
