@@ -13,7 +13,7 @@ task ---    CL2 ASSIGNMENT 03 Client Part
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include<ctype.h>
+#include <ctype.h>
 #include <dirent.h>
 #define MAX 1024
 #define STR 256

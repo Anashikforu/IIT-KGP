@@ -84,6 +84,8 @@ int getClientSoket(struct clientRecord client_details[],int client_id);
 int checkFilePermission(char filename[],int clientSocket,int owner,int editorPermission);
 int validateCommand(char command[]);
 
+char *retriveMessage(char message[]);
+
 int main(int argc , char *argv[])
 {
     FILE *fp;
@@ -370,7 +372,8 @@ int main(int argc , char *argv[])
                 }
                 else if(strcmp(str1,"/insert")==0 && valid >= 2)
                 {  
-                    int last_insert = 0;
+                    int last_insert = 0, msglen;
+                    char conv_msg[STR];
                     editor_permission = 1;
 
                     valid = sscanf(str,"%s %s %d %[^\n]",str1,str2,&start_idx,str4);
@@ -378,6 +381,18 @@ int main(int argc , char *argv[])
                     if(valid == 2){
                         valid = sscanf(str,"%s %s %[^\n]",str1,str2,str4);
                         last_insert = 1;
+                    }
+
+                    msglen = strlen(str4);
+
+                    if(msglen < 3){
+                        valid--;
+                    }
+                    else if(str4[0] == 34 && str4[msglen-1] == 34){
+                        strcpy(conv_msg,retriveMessage(str4));
+                    }
+                    else{
+                        valid--;
                     }
 
                     int total_lines = getFilelines(str2);
@@ -390,9 +405,9 @@ int main(int argc , char *argv[])
                         start_idx += total_lines;
                     }
 
-                    if((valid == 4 || (valid == 3 && last_insert == 1)) && total_lines >= start_idx && checkFilePermission(str2,clientsd,owner,editor_permission) == 1 && strlen(str4) > 0){
+                    if((valid == 4 || (valid == 3 && last_insert == 1)) && total_lines >= start_idx && checkFilePermission(str2,clientsd,owner,editor_permission) == 1 ){
     
-                            insertIndex(str2,clientsd,start_idx,str4);
+                            insertIndex(str2,clientsd,start_idx,conv_msg);
                             strcpy(msg,"File inserting completed.\n");
 
                     }else{
@@ -416,14 +431,14 @@ int main(int argc , char *argv[])
                             bzero(msg,sizeof(msg));
                             strcpy(msg,"invalid line numbers for File.\n");
                         }
-                        else if(strlen(str4) > 0){
+                        else if(strlen(str4) == 0){
                             printf("Empty message.\n");
                             strcpy(msg,"Empty message.\n");
                         }
                         else{
-                            printf("File %s does not exist.\n",str2);
+                            printf("Wrong Command\n");
                             bzero(msg,sizeof(msg));
-                            strcpy(msg,"File does not exist.\n");
+                            strcpy(msg,"Wrong Command.Valid Command: /insert <filename> <idx> “<message>”\n");
                         }
                     }
                 }
@@ -1189,6 +1204,30 @@ int validateCommand(char command[]){
         return 0;
     }
 
+}
+
+/*
+take double quoted string with newline and retrive the information
+*/
+char *retriveMessage(char message[]){
+    int msglen,i;
+    char temp[10];
+    char *conv_msg = malloc(STR);
+    bzero(conv_msg,sizeof(conv_msg));  
+    msglen = strlen(message);
+
+    for( i= 1; i<msglen-1; i++){
+        if(message[i] == 92 && message[i+1] == 'n'){
+            strcat(conv_msg,"\n");
+            i++;
+        }
+        else{
+           bzero(temp,sizeof(temp));
+           sprintf(temp,"%c",message[i]);
+           strcat(conv_msg,temp);
+        }
+    }
+    return conv_msg;
 }
 
 /*
