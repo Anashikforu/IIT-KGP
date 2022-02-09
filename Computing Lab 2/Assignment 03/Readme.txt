@@ -60,7 +60,7 @@ Possible case considered :
 7. /insert <filename> <idx> “<message>”:
 		# Check the file exists in server .
 		# Check the client has permission to read the file ( Owner, Collaboratos with E has permission).
-		# Check idx is between (-N+1,N).
+		# Check idx is between (-N,N).
 		# Check idx is present or not, if not , make idx  equal to (last_line+1).
 8. /delete <filename> <start_idx> <end_idx>: 
 		# Check the file exists in server .
