@@ -162,7 +162,6 @@ int main(){
                     bzero(buffer,sizeof(buffer));
                     strcpy(buffer,"EXIST");
                     send(clientSocket,buffer,strlen(buffer),0);
-                    usleep(9000);
                     
 
                     bzero(buffer,sizeof(buffer));
@@ -176,7 +175,6 @@ int main(){
                     bzero(buffer,sizeof(buffer));
                     strcpy(buffer,"WRONG");
                     send(clientSocket,buffer,strlen(buffer),0);
-                    usleep(9000);
                 }
             }
             else if(strcmp(str1,"/download")==0 && validateCommand(str) == 1 && validation == 2)
