@@ -22,7 +22,7 @@ task ---    CL2 ASSIGNMENT 03 Server Part
 #define MAX 1024
 #define STR 256
 #define PORT 8888
-#define CLIENT 5
+#define CLIENT 2
 
 /*
 ﬁles that have been uploaded to the server, along with all
@@ -60,6 +60,8 @@ struct permissionRecord {
 struct permissionRecord fileRecord[MAX];
 int stored_file = 0;
 int UNIQUEID = 10000;
+int allCLients[MAX];
+int allClientsNo = 0;
 
 void upload(char filename[],int clientSocket,int owner);
 void download(char filename[],int clientSocket);
@@ -174,15 +176,18 @@ int main(int argc , char *argv[])
                 {
                     if( client_details[i].socket_id == 0 )
                     {
-                        client_details[i].unique_id = uniqueIdGenerator( UNIQUEID ,client_details);;
+                        int new_id = uniqueIdGenerator( UNIQUEID ,client_details);
+                        client_details[i].unique_id = new_id;
                         client_details[i].socket_id =newsock_fd;
                         client_details[i].status = 1;
-                        printf("Adding to list of CLients as %d\n" , client_details[i].unique_id);
+                        printf("Adding to list of CLients as %d\n" , new_id);
 
-                        sprintf(msg,"[+]Adding to list of CLients as %d.\n[+]Connected to Server(type (/exit) to exit from server).\n",client_details[i].unique_id);
+                        sprintf(msg,"[+]Adding to list of CLients as %d.\n[+]Connected to Server(type (/exit) to exit from server).\n",new_id);
                         send(newsock_fd ,msg,MAX,0);
                         bzero(msg,sizeof(msg)); 
                         connected_client++;
+                        allCLients[allClientsNo] = new_id;
+                        allClientsNo++;
                         break;
                     }
                 }
@@ -208,7 +213,7 @@ int main(int argc , char *argv[])
                 if ((valread = read( clientsd ,str, MAX)) == 0)
                 {
                     getpeername(clientsd , (struct sockaddr*)&address , (socklen_t*)&addrlen);
-                    printf("Host disconnected , ip %s , port %d \n" , inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
+                    printf("Client %d disconnected , ip %s , port %d \n" ,owner, inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
                     close(clientsd);
                     client_details[i].unique_id = 0;
                     client_details[i].socket_id = 0;
@@ -482,8 +487,10 @@ int main(int argc , char *argv[])
                 }
                 else if(strcmp(str1,"/invite")==0 && valid == 3)
                 {
-                    int valid = sscanf(str,"%s %s %d %s\n",str1,str2,&start_idx,str4);
+                    char extra[STR];
+                    int valid = sscanf(str,"%s %s %d %s %[^\n]\n",str1,str2,&start_idx,str4,extra);
                     int invite_client_id,permission,soket_invite_client,edit_permission;
+                    int owner_permission = 1;
 
                     if(strcmp(str4,"E")==0){
                         permission = 2;                              // 2 = editor , 3 = viewer
@@ -506,7 +513,7 @@ int main(int argc , char *argv[])
                         edit_permission = 0;
                     }
 
-                    if(checkFileName(str2) == 0 && (permission == 2 || permission == 3) && checkClientStatus(client_details,invite_client_id) == 1 && checkFilePermission(str2,soket_invite_client,invite_client_id,edit_permission) == 0){
+                    if(checkFileName(str2) == 0 && (permission == 2 || permission == 3) && checkClientStatus(client_details,invite_client_id) == 1 && checkFilePermission(str2,clientsd,owner,owner_permission) == 1  && checkFilePermission(str2,soket_invite_client,invite_client_id,edit_permission) == 0 && valid == 4){
 
                         send(soket_invite_client ,str,MAX,0);
                         bzero(msg,sizeof(msg));
@@ -515,15 +522,19 @@ int main(int argc , char *argv[])
                         strcpy(msg,"Invitation sent to Client.\n");
                     }else{
 
-                        if(checkFileName(str2) == 1){
+                        if(checkFileName(str2) == 1 && valid == 4){
                             printf("File %s does not exist.\n",str2);
                             strcpy(msg,"File does not exist.\n");
                         }
-                        else if(checkClientStatus(client_details,invite_client_id) == 0){
+                        else if(checkFilePermission(str2,clientsd,owner,owner_permission) == 0 && valid == 4){
+                            printf("The Client %d is not the owner of the File %s.\n",owner,str2);
+                            strcpy(msg,"The Client %d is not the owner of the File.\n");
+                        }
+                        else if(checkClientStatus(client_details,invite_client_id) == 0 && valid == 4){
                             printf("Invited Client %d does not exist.\n",invite_client_id);
                             strcpy(msg,"Invited Client does not exist.\n");
                         }
-                        else if(checkFilePermission(str2,soket_invite_client,invite_client_id,edit_permission) == 1){
+                        else if(checkFilePermission(str2,soket_invite_client,invite_client_id,edit_permission) == 1 && permission != 0 && valid == 4){
                             printf("The Client %d already has the permission.\n",invite_client_id);
                             strcpy(msg,"The Client already has the permission.\n");
                         }
@@ -1127,9 +1138,9 @@ the server generates a unique 5-digit ID
 */
 int uniqueIdGenerator(int unique_number ,struct clientRecord client_details[]){
 
-    for (int i = 0; i < CLIENT; i++) 
+    for (int i = 0; i < allClientsNo; i++) 
     {
-        if(unique_number == client_details[i].unique_id){
+        if(unique_number == allCLients[i]){
             if(unique_number < 99999){
                 unique_number++;
             }else{
