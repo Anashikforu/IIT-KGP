@@ -25,10 +25,11 @@ FTP Commands to be given as:
 5. /invite <filename> <client_id> <permission>
 	Example:	/invite file.txt 10001 E
 			
-	then , at the Client 10001 terminal,
+	then , at the Client 10001 part,
 			CLIENT 10001 is inviting you as E of file.txt
-			Valid Response: [Yes] [yes] [y] [No] 
+			Valid Response: [Yes] [No]
 			Yes		
+			*Yes is accepted, (yes,y not accepted)
 			The invitation got accecpted.
 	
 6. /read <filename> <start_idx> <end_idx>
