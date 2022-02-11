@@ -11,18 +11,39 @@ To run server program :   ./server
 To compile client program :  gcc client.c -o client 
 To run client program :   ./client
 
+
 FTP Commands to be given as:
 
 1. /users
 2. /files
-3. /upload <filename>
+3. /upload <filename>           
+	Example:  	/upload file.txt
+	
 4. /download <filename>
+	Example:	/download file.txt
+	
 5. /invite <filename> <client_id> <permission>
+	Example:	/invite file.txt 10001 E
+			
+	then , at the Client 10001 terminal,
+			CLIENT 10001 is inviting you as E of file.txt
+			Valid Response: [Yes] [yes] [y] [No] 
+			Yes		
+			The invitation got accecpted.
+	
 6. /read <filename> <start_idx> <end_idx>
+	Example:	/read file.txt 0 20
+	
 7. /insert <filename> <idx> “<message>”
+	Example:	/insert file.txt 0 "add a new line" (one line will be inserted)
+			/insert file.txt 0 "add a new line \n another line" (two line will be inserted)
+	
 8. /delete <filename> <start_idx> <end_idx>
+	Example:	/delete file.txt 0 20
 9. /exit
 10./profile
+
+
 
 Possible case considered :
 
@@ -60,8 +81,11 @@ Possible case considered :
 7. /insert <filename> <idx> “<message>”:
 		# Check the file exists in server .
 		# Check the client has permission to read the file ( Owner, Collaboratos with E has permission).
-		# Check idx is between (-N+1,N).
 		# Check idx is present or not, if not , make idx  equal to (last_line+1).
+		# Check idx is between (-N,N).
+		# Check message is quoted or not.
+		# If message is quoted retrive message along with new line and insert at the line.
+		# If new line exist in the message, more than single lines( depends on how much new Line ) will be inserted
 8. /delete <filename> <start_idx> <end_idx>: 
 		# Check the file exists in server .
 		# Check the client has permission to read the file ( Owner, Collaboratos with E has permission).
@@ -73,3 +97,6 @@ Possible case considered :
 		# CLient List at server end updated.
 10./profile: 
 		# Return Client Unique ID
+		
+		
+		

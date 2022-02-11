@@ -117,7 +117,7 @@ int main(){
                 
                 printf("Server:  CLIENT %d is inviting you as %s of %s\n", invite_owner,str3,str2);
 				
-				fprintf(stdout, "Valid Response: [Yes] [No] \n");
+				fprintf(stdout, "Valid Response: [Yes] [yes] [y] [No] \n");
 				bzero(str3, strlen(str3));
 				bzero(msg, strlen(msg));
 				n = 0; 

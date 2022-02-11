@@ -22,7 +22,7 @@ task ---    CL2 ASSIGNMENT 03 Server Part
 #define MAX 1024
 #define STR 256
 #define PORT 8888
-#define CLIENT 2
+#define CLIENT 5
 
 /*
 ﬁles that have been uploaded to the server, along with all
@@ -576,7 +576,7 @@ int main(int argc , char *argv[])
                     soket_invite_client = getFileOwnerFd(client_details,str2);
                     bzero(msg,sizeof(msg));
 
-                    if(strcmp(str4,"Yes")==0){
+                    if(strcmp(str4,"Yes")==0 || strcmp(str4,"yes")==0 || strcmp(str4,"y")==0){
 
                         updateFileCollaborator(str2,owner,permission);
 
@@ -590,7 +590,7 @@ int main(int argc , char *argv[])
 
                     send(soket_invite_client ,msg,MAX,0);
 
-                    if(strcmp(str4,"Yes")==0){
+                    if(strcmp(str4,"Yes")==0 || strcmp(str4,"yes")==0 || strcmp(str4,"y")==0){
                         strcpy(msg,"The invitation got accecpted.\n");
                     }else{
                         strcpy(msg,"The client got declined.\n");
