@@ -1,0 +1,20 @@
+Name: Md Ashik Khan
+ID: 21CS60A02
+COurse: Machine Learning
+Project 1: Decision Trees
+
+Construction of Decision Tree:
+
+1.Start with empty decision tree.
+2.Select best feature to split
+3.Split the data into different groups based on feature value.
+3.If no more possibility of split
+4.Make prediction with majority class so that we get the exact category.
+5.Split the features recursively
+
+#for dataset, the column name was not provided , so it's defined by code .
+#put dataset into the same directory for execution
+
+
+
+
