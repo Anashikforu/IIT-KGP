@@ -1,0 +1,40 @@
+12.5.2012	electronics audio subwoofer phantom	1.00
+28.8.2016	computers components cooler aerocool	3.30
+27.3.2017	furniture kitchen chair zeta	6.40
+7.10.2011	apparel tshirt goodloot	8.70
+11.9.2021	apparel underwear milavitsa	9.00
+29.4.2015	computers components cooler deepcool	9.80
+27.10.2015	kids toys disney	10.30
+13.12.2015	kids toys disney	10.30
+30.4.2016	kids toys disney	10.30
+11.3.2018	kids toys disney	10.30
+23.4.2019	kids toys disney	10.30
+16.12.2010	appliances personal massager bradex	12.30
+22.5.2015	appliances personal massager bradex	12.30
+5.3.2020	appliances personal massager bradex	12.30
+18.9.2020	appliances personal massager bradex	12.30
+8.5.2021	appliances personal massager bradex	12.30
+1.7.2016	electronics audio headphone xiaomi	12.80
+27.11.2021	electronics audio headphone xiaomi	12.80
+13.12.2021	electronics audio headphone xiaomi	12.80
+6.12.2012	appliances personal massager masstone	13.00
+3.9.2014	appliances personal massager masstone	13.00
+11.12.2015	construction tools painting fubag	13.00
+19.6.2012	electronics telephone texet	14.00
+25.5.2018	computers components cooler deepcool	14.80
+6.6.2013	electronics telephone inoi	15.00
+10.4.2015	electronics telephone inoi	15.00
+6.5.2016	electronics telephone inoi	15.00
+7.7.2015	electronics clocks casio	15.10
+12.8.2011	electronics audio subwoofer phantom	15.40
+23.5.2010	computers peripherals keyboard defender	16.40
+8.6.2014	computers peripherals keyboard defender	16.40
+20.4.2020	computers peripherals keyboard defender	16.40
+21.12.2011	furniture kitchen chair zeta	16.90
+8.1.2013	furniture kitchen chair zeta	16.90
+11.5.2020	furniture kitchen chair zeta	16.90
+7.11.2010	electronics telephone jinga	17.10
+5.1.2011	electronics telephone jinga	17.10
+23.3.2012	electronics telephone jinga	17.10
+11.1.2012	furniture kitchen chair fly	17.20
+11.7.2015	furniture kitchen chair fly	17.20

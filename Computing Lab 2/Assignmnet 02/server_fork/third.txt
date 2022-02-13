@@ -1,0 +1,100 @@
+27.3.2017	furniture kitchen chair zeta	6.40
+7.10.2011	apparel tshirt goodloot	8.70
+11.9.2021	apparel underwear milavitsa	9.00
+29.4.2015	computers components cooler deepcool	9.80
+27.10.2015	kids toys disney	10.30
+13.12.2015	kids toys disney	10.30
+11.3.2018	kids toys disney	10.30
+30.4.2016	kids toys disney	10.30
+23.4.2019	kids toys disney	10.30
+22.5.2015	appliances personal massager bradex	12.30
+16.12.2010	appliances personal massager bradex	12.30
+8.5.2021	appliances personal massager bradex	12.30
+18.9.2020	appliances personal massager bradex	12.30
+5.3.2020	appliances personal massager bradex	12.30
+1.7.2016	electronics audio headphone xiaomi	12.80
+27.11.2021	electronics audio headphone xiaomi	12.80
+13.12.2021	electronics audio headphone xiaomi	12.80
+11.12.2015	construction tools painting fubag	13.00
+6.12.2012	appliances personal massager masstone	13.00
+3.9.2014	appliances personal massager masstone	13.00
+19.6.2012	electronics telephone texet	14.00
+25.5.2018	computers components cooler deepcool	14.80
+10.4.2015	electronics telephone inoi	15.00
+6.6.2013	ele ‚Btþctronics telephone inoi	15.00
+6.5.2016	electronics telephone inoi	15.00
+7.7.2015	electronics clocks casio	15.10
+12.8.2011	electronics audio subwoofer phantom	15.40
+12.5.2012	electronics audio subwoofer phantom	15.40
+23.5.2010	computers peripherals keyboard defender	16.40
+20.4.2020	computers peripherals keyboard defender	16.40
+8.6.2014	computers peripherals keyboard defender	16.40
+21.12.2011	furniture kitchen chair zeta	16.90
+11.5.2020	furniture kitchen chair zeta	16.90
+8.1.2013	furniture kitchen chair zeta	16.90
+23.3.2012	electronics telephone jinga	17.10
+5.1.2011	electronics telephone jinga	17.10
+7.11.2010	electronics telephone jinga	17.10
+11.1.2012	furniture kitchen chair fly	17.20
+11.7.2015	furniture kitchen chair fly	17.20
+10.11.2011	furniture kitchen chair fly	17.20
+6.1.2010	furniture kitchen chair fly	17.20
+12.12.2011	construction tools painting matrix	17.40
+8.6.2017	appliances personal massager smile	17.70
+2.9.2012	appliances personal massager smile	17.70
+21.10.2011	appliances personal massager smile	1 ‚Btþ7.70
+16.4.2016	appliances personal massager smile	17.70
+18.4.2018	electronics audio subwoofer phantom	18.20
+8.1.2019	apparel underwear milavitsa	18.50
+1.6.2020	apparel underwear milavitsa	18.50
+4.6.2011	apparel underwear obsessive	20.30
+11.10.2015	electronics audio headphone xiaomi	22.00
+3.3.2013	electronics audio headphone xiaomi	22.00
+4.10.2016	electronics audio headphone xiaomi	22.00
+28.5.2012	electronics audio headphone xiaomi	22.00
+7.8.2010	electronics audio headphone xiaomi	22.00
+6.7.2014	electronics audio headphone xiaomi	22.00
+11.1.2011	electronics audio headphone xiaomi	22.00
+28.3.2016	apparel jumper conceptclub	22.90
+17.5.2021	electronics audio headphone xiaomi	23.00
+2.4.2012	electronics audio headphone xiaomi	23.00
+29.8.2010	electronics audio headphone xiaomi	23.00
+22.1.2018	electronics audio headphone xiaomi	23.00
+7.6.2016	electronics audio headphone xiaomi	23.00
+8.9.2021	appliances personal scales scarlett	23.70
+15.8.2016	apparel shoes respect	23.90
+3.6.2013	electronics clocks casio	24.40
+28.12.2 ‚Btþ017	construction tools painting fubag	24.70
+16.8.2010	construction tools painting fubag	24.70
+11.4.2017	construction tools welding resanta	25.00
+7.1.2020	appliances environment water_heater oasis	25.40
+28.4.2012	appliances environment water_heater oasis	25.40
+29.1.2015	appliances environment water_heater oasis	25.40
+28.9.2017	apparel shoes respect	25.40
+19.6.2015	electronics audio headphone harper	25.70
+13.6.2011	electronics clocks casio	26.50
+12.5.2013	electronics clocks casio	26.50
+27.7.2012	apparel shirt dion	29.00
+15.3.2016	construction tools light stanley	29.80
+2.7.2014	construction tools light stanley	29.80
+16.4.2014	accessories bag apple	30.00
+11.6.2018	appliances personal massager gezatone	30.10
+16.4.2011	appliances personal massager gezatone	30.10
+25.11.2011	appliances personal massager gezatone	30.10
+28.4.2016	appliances personal massager gezatone	30.10
+27.11.2010	appliances personal massager gezatone	30.10
+14.8.2014	apparel underwear milavitsa	30.10
+28.1.2016	appliances environment water_heater aqua	30.60
+15.10.2014	appliances environment water_heater aqua	30.60
+10.10.2014	apparel tshirt fila	30.60
+20.1.2016	furniture kitchen chair domini	30.80
+8.11.2011	furniture kitchen chair domini	30.80
+3.6.2014	furniture kitchen chair domini	30.80
+16.4.2015	appliances environment water_heater aqua	30.80
+29.12.2021	appliances kitchen meat_grinder dauscher	30.8 ‚Btþ0
+5.11.2015	apparel tshirt nike	32.10
+28.1.2012	appliances environment water_heater oasis	32.60
+23.5.2015	appliances environment water_heater oasis	32.60
+23.4.2016	appliances environment vacuum elenberg	32.80
+23.11.2018	construction tools drill kolner	32.90
+24.3.2012	furniture kitchen chair barneo	33.20
