@@ -7,7 +7,7 @@ import ply.yacc as yacc
 # lexical analyzer
 tokens = (
             'DIV_CONTENT',
-            'DIV_OPEN' ,
+            'DIV_OPEN',
             'DIV_CLOSE',
             'DATA'
          )
