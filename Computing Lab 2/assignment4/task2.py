@@ -11,6 +11,7 @@ import re
 import ply.lex as lex
 import ply.yacc as yacc
 import task1 as t1
+import datetime
 
 # GLOBAL VARIABLES
 
@@ -23,7 +24,7 @@ country_info = {}
 continent_info = {}
 world_info = {}
 
-Dates =[]
+pendamicPeriod =[]
 reportValue = {}
 
 # lexical analyzer
@@ -226,6 +227,7 @@ def store_report_data(newcase_date, newcase_data, country_name, activecase_date,
     reportValue[country_name] = {}
     reportValue[country_name]["newcase_date"] = processReportData(newcase_date)
     reportValue[country_name]["newcase_data"] = newcase_data.split(",")
+    pendamicPeriod = reportValue[country_name]["newcase_date"]
 
     if(activecase_date):
         reportValue[country_name]["activecase_date"] = processReportData(activecase_date)
@@ -351,9 +353,62 @@ def checkOptionNo(element,lenth):
             return False
     except ValueError:
         return False
-def queryMenu():
+
+def dateRange(country_name,startDate,endDate):
+    value=0
+    startdateVal = ""
+    endDateVal = ""
+    try:
+        if(startDate.count('-') == 2 and endDate.count('-') == 2):
+            beginning = reportValue[country_name]["newcase_date"][0]
+            ending = reportValue[country_name]["newcase_date"][-1]
+            print(beginning)
+            startDate = startDate.split('-')
+            startD = datetime.datetime(int(startDate[2]), int(startDate[1]), int(startDate[0]))
+            startdateVal = startD.strftime("%b %d, %Y")
+            endDate = endDate.split('-')
+            endD = datetime.datetime(int(endDate[2]), int(endDate[1]), int(endDate[0]))
+            endDateVal  = endD.strftime("%b %d, %Y")
+            # if (beginning <= startdateVal and startdateVal <= endDateVal and endDateVal<=ending):
+            value = 1
+    except:
+        value=0
+    return (value,startdateVal,endDateVal)
+
+def countryQuery():
+    optionListLowerCase = []
+    for option_reg in countrylist:
+        optionListLowerCase.append(option_reg.lower())
+
+    print(" ---------------------------")
+    print("|       Select Country     |")
+    print(" ---------------------------")
+    for (i, country) in enumerate(countrylist, start=1):
+        print(":   {}. {}".format(i, country))
+    print(" ---------------------------")
+    while (1):
+        option_no = input("\nEnter Country name/no (Enter (back) for going back):\n")
+
+        if (option_no == "back"):
+            break
+        elif (checkOptionNo(option_no, len(countrylist))):
+            country_name = countrylist[int(option_no) - 1]
+            print(country_name)
+            queryMenu(country_name)
+        elif (option_no in countrylist):
+            country_name = option_no
+            print(country_name)
+            queryMenu(country_name)
+        elif (option_no in optionListLowerCase):
+            country_name = countrylist[optionListLowerCase.index(option_no)]
+            print(country_name)
+            queryMenu(country_name)
+        else:
+            print("Invalid option.\n")
+
+def queryMenu(country_name):
     print("---------------------------------------------------------")
-    print("|     COVID-19 Coronavirus Pandemic Query               |")
+    print("     {} COVID-19 Coronavirus Pandemic Query   ".format(country_name))
     print("---------------------------------------------------------")
     print("|   1. Change in active cases in %                      |")
     print("|   2. Change in daily death in %                       |")
@@ -369,14 +424,17 @@ def queryMenu():
             break
         elif (checkOptionNo(option_no, 5)):
             option_no = int(option_no)
-            # print(option_no)
-            print(" ---------------------------")
-            print("|       Select Country     |")
-            print(" ---------------------------")
-            for (i, country) in enumerate(countrylist, start=1):
-                print(":   {}. {}".format(i, country))
-            print(" ---------------------------")
-
+            print(option_no)
+            print("Enter Query Start Date and End Date in range of {} and {}".format(reportValue[country_name]["newcase_date"][0],reportValue[country_name]["newcase_date"][-1]))
+            startDate = input("Start Date(Format 01-01-2022):")
+            endDate = input("End Date(Format 01-01-2022):")
+            (val,startDate,endDate) = dateRange(country_name,startDate,endDate)
+            if(val == 0):
+                print("Wrong Date Format! Try again.")
+                break
+            else:
+                print(startDate)
+                print(endDate)
         else:
             print("Invalid option.\n")
 
@@ -528,7 +586,7 @@ def main():
         elif (info_type == "Query" or info_type == "query" or info_type == '4'):
             info_type = "Query"
 
-            queryMenu()
+            countryQuery()
 
         elif(info_type == "exit"):
             break
