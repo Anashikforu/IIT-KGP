@@ -25,7 +25,6 @@ world_info = {}
 
 Dates =[]
 reportValue = {}
-country_new_link = []
 
 # lexical analyzer
 tokens = (
@@ -46,7 +45,9 @@ tokens = (
             'ACTIVECASESDATA',
             'DAILYDEATH_DATE',
             'DAILYDEATH_DATA',
-            'DAILYDEATH_CLOSE',
+            'BRECOVERY_COUNTRY',
+            'REST_ALL',
+            'RES_RECOV',
             'ALL'
           )
 
@@ -70,7 +71,9 @@ t_ACTIVECASESDATE           =   r'''<\/h3>\s<div\sid="[\d\w() -.'\"()\s\:;=]+><\
 t_ACTIVECASESDATA           =   r'''\][\d\w() : ; {} -.'\/\"()\s\$]+\[{\sname:\s'Currently\sInfected'[\d\w() : ; {} -.'\/\"()\s\$]+\['''
 t_DAILYDEATH_DATE           =   r'''\]\s}\s\],[\d\w() :{} [\]; -.'\/\"()\s\$]+<\/script>\s<\/div>\s<\/div>\s<div\sclass="[\d\w() -.'\/\"()\s\$]+>\s<div\sclass="[\d\w() -.'\/\"()\s\$]+>\s<h3>[\d\w() -.'\/\"()\s\$]+<\/h3>\s<style>[\d\w() { :;} -.'\/\"()>\s\$]+<\/style>\s[<>{:}[\];=\d\w() -.'\/\"()\s\$]+<h3>Daily\sNew\sDeaths\sin\s[\d\w() -.'\/\"()\s\$]+<\/h3>[<=>{:}\d\w() -.'\/\"()\s\$]+text:\s'Daily\sDeaths'[\d\w()}:{<> -.'\/\"()\s\$]+\['''
 t_DAILYDEATH_DATA           =   r''']\s}[\d\w():{}; -.'\/\"()\s\$]+\[{\sname:\s'Daily\sDeaths',[\d\w(): -.'\/\"()\s\$]+\['''
-t_DAILYDEATH_CLOSE          =   r''']\s},\s{[\d\w(): -.'\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+\][\d\w() -.'\/\"():{}\[\];\s\$]+<\/script>[<>=:;{}\d\w() -.'\/\"()\s\$]+<a\sstyle="[\d\w() -.'\/\"():;\s\$]+href="\/coronavirus'''
+t_BRECOVERY_COUNTRY         =   r'''<a\shref="[\/\#\w\d]+">Countries<\/a>\s\/\s'''
+t_REST_ALL                  =   r'''<\/div>\s<div\sstyle="[\w\d\# %\-:;]+">[\d\w() -.'\/\":()\s\$]+<\/div>\s<div\sstyle="[\w\d\# %\-:;]+">\s<h1>\s<div\sstyle="[\w\d\# %\-:;]+">[<>=;:{}\d\w() -.'\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+\][\d\w();{}: -.'\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s},[\d\w():{}\ -.'\/\"()\s\$]+\[[\d,]+\][\d\w():{} -.'\/\"()\s\$]+\[{\sname:\s'Currently\sInfected',[\d\w(): -.'\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s}\][\d\w():{ -.'\/\"()\s\$]+\[[\d\w(){}: -.'\/\"()\s\$]+\][\d\w() <> {};=: -.'\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s}[\d\w():{} -.'\/\"()\s\$]+\[[{}:\d\w() -.'\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+]\s},\s{\sname:\s'Recovery\sRate',[\d\w(): -.'\/\"()\s\$]+\['''
+t_RES_RECOV                 =   r'''</div>\s<div\sstyle=[\d\w() -.':;\/\"()\s\$]+>[\d\w() -.':<>=;{}\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s}[\d\w() -.'\/\"():{}\s\$]+\[[\d\w() -.{:'\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s},\s{\sname:\s'Recovery\sRate',[\d\w() -.'\/\"():\s\$]+\['''
 t_ignore_COMMENT            =   r'\#.*'
 t_ignore                    =   ' \t'    # ignores spaces and tabs
 
@@ -92,6 +95,8 @@ def p_start(p):
             | S11
             | S12
             | S13
+            | S14
+            | S15
             '''
 
 
@@ -183,18 +188,8 @@ def store_country_data(country_name,total_cases,new_cases,total_death,new_death,
     # print(country_info[country_name], len(country_info))
 
 
-# def p_covid_duration(p):
-#     'S14 :  LDATE RDATE'
-#     date = p[1].split('[')[1]
-#     Dates.append(date)
-#     reportValue[countrylist[len(Dates)-1]] = {}
-#     data = date.split('","')
-#     data[0] = data[0].split('"')[1]
-#     data[-1] = data[-1].split('"')[0]
-#     reportValue[countrylist[len(Dates) - 1]]['Date'] = data
-
 def p_covid_new_case_report(p):
-    'S13 : NEWCASEDATE ALL NEWCASEDATA ALL NEWCASECLOSE ACTIVECASESSTART ALL ACTIVECASESDATE ALL ACTIVECASESDATA ALL DAILYDEATH_DATE ALL DAILYDEATH_DATA ALL DAILYDEATH_CLOSE ALL '
+    'S13 : NEWCASEDATE ALL NEWCASEDATA ALL NEWCASECLOSE ACTIVECASESSTART ALL ACTIVECASESDATE ALL ACTIVECASESDATA ALL DAILYDEATH_DATE ALL DAILYDEATH_DATA ALL'
     newcase_date = p[2]
     newcase_data = p[4]
     country_name = p[7]
@@ -202,15 +197,53 @@ def p_covid_new_case_report(p):
     activecase_data = p[11]
     dailydeath_date = p[13]
     dailydeath_data = p[15]
-    country_link = p[17]
-    country_link = country_link.split('"')[0]
-    country_new_link.append(country_link)
-    print(len(country_new_link))
+    if(country_name == "the United Kingdom"):
+        country_name = "UK"
+    elif(country_name == "the Netherlands"):
+        country_name = "Netherlands"
+    elif (country_name == "the United States"):
+        country_name = "USA"
+    elif (country_name == "the Philippines"):
+        country_name = "Philippines"
 
+    reportValue[country_name]={}
+    reportValue[country_name]["newcase_date"] = processReportData(newcase_date)
+    reportValue[country_name]["newcase_data"] = newcase_data.split(",")
+
+    reportValue[country_name]["activecase_date"] = processReportData(activecase_date)
+    reportValue[country_name]["activecase_data"] = activecase_data.split(",")
+
+    reportValue[country_name]["dailydeath_date"] = processReportData(dailydeath_date)
+    reportValue[country_name]["dailydeath_data"] = dailydeath_data.split(",")
+
+def p_Recovery_Data(p):
+    'S14 : BRECOVERY_COUNTRY ALL REST_ALL ALL'
+    country_name = p[2].strip()
+    infection_rate = p[4].split(",")
+    reportValue[country_name]["recovery_rate"] = infection_rate
+    print(country_name)
+    print(reportValue[country_name]["recovery_rate"])
+
+def p_Rest_Recovery_Data(p):
+    'S15 : BRECOVERY_COUNTRY ALL RES_RECOV ALL'
+    country_name = p[2].strip()
+    if (country_name == "United States"):
+        country_name = "USA"
+    infection_rate = p[4].split(",")
+    reportValue[country_name]["recovery_rate"] = infection_rate
+    print(country_name)
+    print(reportValue[country_name]["recovery_rate"])
 
 
 def p_error(p):
     pass
+
+def processReportData(data):
+    data = data.split('","')
+    data[0] = data[0].split('"')[1]
+    data[-1] = data[-1].split('"')[0]
+
+    return data
 
 def getYesterdayData(data):
     delim = '<table id="main_table_countries_yesterday" class="table table-bordered table-hover main_table_countries" style="width:100%;margin-top: 0px !important;display:none;">'
@@ -226,6 +259,24 @@ def getReportData(data):
     data = data.split(delim_before)[0]
     return data
 
+def checkRecoveryData(data):
+    delim = "name: 'Recovery Rate',"
+    delim_before = 'maxWidth: 400 }'
+    if(data.find(delim) == -1 ):
+        return False
+    elif(data.find(delim_before) == -1):
+        return False
+    elif(data.find(delim) > data.find(delim_before)):
+        return False
+    return True
+
+def getRecoveryData(data):
+    delim = '<div class="label-counter" id="page-top"><a href="/coronavirus/">World</a> / '
+    data = data.partition(delim)[2]
+    delim_before = 'maxWidth: 400 }'
+    data = data.split(delim_before)[0]
+    return data
+
 def read_html(data):
     data = getYesterdayData(data)
     # print(data)
@@ -233,25 +284,24 @@ def read_html(data):
     parser = yacc.yacc()
     parser.parse(data)
 
-    print("Parsing Done!")
-
-# def read_report(country,start_date):
-#
-#     # print(country)
-#     lexer = lex.lex()
-#     parser = yacc.yacc()
-
     country_dict = t1.get_country_dic()
-    # print(country_dict)
 
     for continent in country_dict:
         for country in country_dict[continent]:
             country_path = "./HTML/"+continent+"/" + country + ".html"
             country_file = open(country_path, "r")
-            content = country_file.read()
-            content = getReportData(content)
-            print(country)
+            m_content = country_file.read()
+            content = getReportData(m_content)
             parser.parse(content)
+
+            if(checkRecoveryData(m_content) == True):
+                recovery_content = getRecoveryData(m_content)
+                if(country=="Russia"):
+                    f = open("file.txt","w")
+                    f.write(recovery_content)
+                    f.close()
+                # print(recovery_content)
+                parser.parse(recovery_content)
 
     print("Parsing Done!")
 
