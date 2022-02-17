@@ -25,7 +25,7 @@ world_info = {}
 
 Dates =[]
 reportValue = {}
-
+country_new_link = []
 
 # lexical analyzer
 tokens = (
@@ -38,12 +38,15 @@ tokens = (
             'TR_CONTINENT',
             'NOBR_CLOSE',
             'NOBR',
-            'LDATE',
-            'RDATE',
-            'COUNTRY',
             'NEWCASEDATE',
             'NEWCASEDATA',
             'NEWCASECLOSE',
+            'ACTIVECASESSTART',
+            'ACTIVECASESDATE',
+            'ACTIVECASESDATA',
+            'DAILYDEATH_DATE',
+            'DAILYDEATH_DATA',
+            'DAILYDEATH_CLOSE',
             'ALL'
           )
 
@@ -59,12 +62,15 @@ t_NOBR_CLOSE                =   r'''</nobr>'''
 t_LINK						= 	r'''<a\sclass="[\d\w()\-\]"\shref="country/[\d\w()\-\ _ "=]+>'''
 t_ANCHOR					=	r'''<\/a>'''
 t_ALL						= 	r'''[\d\w() -.'\/\"()\s\$]+'''
-t_LDATE                     =   r'''categories:\s\[+[\d\w() -.'\/\"()\s\$]+'''
-t_RDATE                     =   r'''\]\s},\syAxis:\s{\stitle:\s{\stext:\s'Novel\sCoronavirus\sDaily\sDeaths'\s}'''
-t_COUNTRY                   =   r'''[\d\w\s]+'''
 t_NEWCASEDATE               =   r'''<\/h3>\s<div\sid="[\d\w() -.'\/\"()\s\$]+"><\/div>\s<script\stype="[\d\w() -.'\/\"()\s\$]+">[\d\w() -.'\/\"()\s\$]+{[\d\w() : {} -.'\/\"()\s\$]+Daily\sNew\sCases[\d\w() : {} -.'\/\"()\s\$]+<br>[\d\w() : {} -.'\/\"()\s\$]+categories:\s\['''
 t_NEWCASEDATA               =   r'''\][\d\w() : ; {} -.'\/\"()\s\$]+\[{\sname:\s'Daily\sCases'[\d\w() : {} -.'\/\"()\s\$]+data:\s\['''
-t_NEWCASECLOSE              =   r''']\s}'''
+t_NEWCASECLOSE              =   r''']\s}[[\d\w() : {} -.'\/\"()\s;\]\$]+'''
+t_ACTIVECASESSTART          =   r'''<\/script>\s<div\sstyle="[\d\w() -.'\"()\s\:;=]+">+[\d\w() -.'\"()\s\:;=]+<a\sstyle="[\d\w() -.'\"()\s\:;=]+>[\d\w() -.'\"()\s\:;=]+<\/a>\s<\/div>\s<\/div>\s<\/div>\s<div\sclass="[\d\w() -.'\"()\s\:;=]+">\s<div\sclass="[\d\w() -.'\"()\s\:;=]+>\s<h3>Active\sCases\sin\s'''
+t_ACTIVECASESDATE           =   r'''<\/h3>\s<div\sid="[\d\w() -.'\"()\s\:;=]+><\/div>\s<script\stype="text\/javascript">[\d\w() {} -.'\"()\s\:;=]+\['''
+t_ACTIVECASESDATA           =   r'''\][\d\w() : ; {} -.'\/\"()\s\$]+\[{\sname:\s'Currently\sInfected'[\d\w() : ; {} -.'\/\"()\s\$]+\['''
+t_DAILYDEATH_DATE           =   r'''\]\s}\s\],[\d\w() :{} [\]; -.'\/\"()\s\$]+<\/script>\s<\/div>\s<\/div>\s<div\sclass="[\d\w() -.'\/\"()\s\$]+>\s<div\sclass="[\d\w() -.'\/\"()\s\$]+>\s<h3>[\d\w() -.'\/\"()\s\$]+<\/h3>\s<style>[\d\w() { :;} -.'\/\"()>\s\$]+<\/style>\s[<>{:}[\];=\d\w() -.'\/\"()\s\$]+<h3>Daily\sNew\sDeaths\sin\s[\d\w() -.'\/\"()\s\$]+<\/h3>[<=>{:}\d\w() -.'\/\"()\s\$]+text:\s'Daily\sDeaths'[\d\w()}:{<> -.'\/\"()\s\$]+\['''
+t_DAILYDEATH_DATA           =   r''']\s}[\d\w():{}; -.'\/\"()\s\$]+\[{\sname:\s'Daily\sDeaths',[\d\w(): -.'\/\"()\s\$]+\['''
+t_DAILYDEATH_CLOSE          =   r''']\s},\s{[\d\w(): -.'\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+\][\d\w() -.'\/\"():{}\[\];\s\$]+<\/script>[<>=:;{}\d\w() -.'\/\"()\s\$]+<a\sstyle="[\d\w() -.'\/\"():;\s\$]+href="\/coronavirus'''
 t_ignore_COMMENT            =   r'\#.*'
 t_ignore                    =   ' \t'    # ignores spaces and tabs
 
@@ -188,8 +194,18 @@ def store_country_data(country_name,total_cases,new_cases,total_death,new_death,
 #     reportValue[countrylist[len(Dates) - 1]]['Date'] = data
 
 def p_covid_new_case_report(p):
-    'S13 : NEWCASEDATE ALL NEWCASEDATA ALL NEWCASECLOSE'
-    # print(p[1])
+    'S13 : NEWCASEDATE ALL NEWCASEDATA ALL NEWCASECLOSE ACTIVECASESSTART ALL ACTIVECASESDATE ALL ACTIVECASESDATA ALL DAILYDEATH_DATE ALL DAILYDEATH_DATA ALL DAILYDEATH_CLOSE ALL '
+    newcase_date = p[2]
+    newcase_data = p[4]
+    country_name = p[7]
+    activecase_date = p[9]
+    activecase_data = p[11]
+    dailydeath_date = p[13]
+    dailydeath_data = p[15]
+    country_link = p[17]
+    country_link = country_link.split('"')[0]
+    country_new_link.append(country_link)
+    print(len(country_new_link))
 
 
 
