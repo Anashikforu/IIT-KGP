@@ -43,6 +43,8 @@ tokens = (
             'ACTIVECASESSTART',
             'ACTIVECASESDATE',
             'ACTIVECASESDATA',
+            'NACTIVECASES',
+            'NDAILYDEATH_DATE',
             'DAILYDEATH_DATE',
             'DAILYDEATH_DATA',
             'BRECOVERY_COUNTRY',
@@ -69,6 +71,8 @@ t_NEWCASECLOSE              =   r''']\s}[[\d\w() : {} -.'\/\"()\s;\]\$]+'''
 t_ACTIVECASESSTART          =   r'''<\/script>\s<div\sstyle="[\d\w() -.'\"()\s\:;=]+">+[\d\w() -.'\"()\s\:;=]+<a\sstyle="[\d\w() -.'\"()\s\:;=]+>[\d\w() -.'\"()\s\:;=]+<\/a>\s<\/div>\s<\/div>\s<\/div>\s<div\sclass="[\d\w() -.'\"()\s\:;=]+">\s<div\sclass="[\d\w() -.'\"()\s\:;=]+>\s<h3>Active\sCases\sin\s'''
 t_ACTIVECASESDATE           =   r'''<\/h3>\s<div\sid="[\d\w() -.'\"()\s\:;=]+><\/div>\s<script\stype="text\/javascript">[\d\w() {} -.'\"()\s\:;=]+\['''
 t_ACTIVECASESDATA           =   r'''\][\d\w() : ; {} -.'\/\"()\s\$]+\[{\sname:\s'Currently\sInfected'[\d\w() : ; {} -.'\/\"()\s\$]+\['''
+t_NACTIVECASES              =   r'''<\/script>\s<div\sstyle="[\d\w() -.'\"()\s\:;=]+">+[\d\w() -.'\"()\s\:;=]+<a\sstyle="[\d\w() -.'\"()\s\:;=]+>[\d\w() -.'\"()\s\:;=]+<\/a>\s<\/div>\s<\/div>\s<\/div>\s<div\sclass="[\d\w() -.'\"()\s\:;=]+">\s<div\sclass="[\d\w() -.'\"()\s\:;=]+>\s<h3>Total\sCoronavirus\sDeaths\sin\s'''
+t_NDAILYDEATH_DATE          =   r'''<\/h3>\s<style>[\d\w() -.'\/\"(){}:;<>=\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s}[\d\w() -.'\/\"():{}\s\$]+\[{[\d\w() -.'\/\"():\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s}\][\d\w() -.'\/\":{()\s\$]+\[{[\d\w() -.'\/\"():{}\s\$]+\]\s[\d\w() -.'\/\"(){};:\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s}[\d\w() -.'\/\"():{}\s\$]+\[{[\d\w() -.'\/\"():\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s}\][\d\w() -.'\/\"():{\s\$]+\[{[\d\w() -.'\/\"():{}\s\$]+\][\d\w() -.'\/\"();<>=:\s{}\$]+'Daily\sDeaths'[\d\w() -.'\/\"()\s{}:<>\$]+'''
 t_DAILYDEATH_DATE           =   r'''\]\s}\s\],[\d\w() :{} [\]; -.'\/\"()\s\$]+<\/script>\s<\/div>\s<\/div>\s<div\sclass="[\d\w() -.'\/\"()\s\$]+>\s<div\sclass="[\d\w() -.'\/\"()\s\$]+>\s<h3>[\d\w() -.'\/\"()\s\$]+<\/h3>\s<style>[\d\w() { :;} -.'\/\"()>\s\$]+<\/style>\s[<>{:}[\];=\d\w() -.'\/\"()\s\$]+<h3>Daily\sNew\sDeaths\sin\s[\d\w() -.'\/\"()\s\$]+<\/h3>[<=>{:}\d\w() -.'\/\"()\s\$]+text:\s'Daily\sDeaths'[\d\w()}:{<> -.'\/\"()\s\$]+\['''
 t_DAILYDEATH_DATA           =   r''']\s}[\d\w():{}; -.'\/\"()\s\$]+\[{\sname:\s'Daily\sDeaths',[\d\w(): -.'\/\"()\s\$]+\['''
 t_BRECOVERY_COUNTRY         =   r'''<a\shref="[\/\#\w\d]+">Countries<\/a>\s\/\s'''
@@ -197,42 +201,50 @@ def p_covid_new_case_report(p):
     activecase_data = p[11]
     dailydeath_date = p[13]
     dailydeath_data = p[15]
-    if(country_name == "the United Kingdom"):
+    store_report_data(newcase_date, newcase_data, country_name, activecase_date, activecase_data, dailydeath_date, dailydeath_data)
+
+
+def p_Rest_Report_Data(p):
+    'S14 : NEWCASEDATE ALL NEWCASEDATA ALL NEWCASECLOSE NACTIVECASES ALL NDAILYDEATH_DATE ALL DAILYDEATH_DATA ALL'
+    newcase_date = p[2]
+    newcase_data = p[4]
+    country_name = p[7]
+    dailydeath_date = p[9]
+    dailydeath_data = p[11]
+    store_report_data(newcase_date, newcase_data, country_name, '', '', dailydeath_date, dailydeath_data)
+
+def store_report_data(newcase_date, newcase_data, country_name, activecase_date, activecase_data, dailydeath_date, dailydeath_data):
+    if (country_name == "the United Kingdom"):
         country_name = "UK"
-    elif(country_name == "the Netherlands"):
+    elif (country_name == "the Netherlands"):
         country_name = "Netherlands"
     elif (country_name == "the United States"):
         country_name = "USA"
     elif (country_name == "the Philippines"):
         country_name = "Philippines"
-
-    reportValue[country_name]={}
+    # print(country_name)
+    reportValue[country_name] = {}
     reportValue[country_name]["newcase_date"] = processReportData(newcase_date)
     reportValue[country_name]["newcase_data"] = newcase_data.split(",")
 
-    reportValue[country_name]["activecase_date"] = processReportData(activecase_date)
-    reportValue[country_name]["activecase_data"] = activecase_data.split(",")
+    if(activecase_date):
+        reportValue[country_name]["activecase_date"] = processReportData(activecase_date)
+        reportValue[country_name]["activecase_data"] = activecase_data.split(",")
 
     reportValue[country_name]["dailydeath_date"] = processReportData(dailydeath_date)
     reportValue[country_name]["dailydeath_data"] = dailydeath_data.split(",")
 
 def p_Recovery_Data(p):
-    'S14 : BRECOVERY_COUNTRY ALL REST_ALL ALL'
-    country_name = p[2].strip()
-    infection_rate = p[4].split(",")
-    reportValue[country_name]["recovery_rate"] = infection_rate
-    print(country_name)
-    print(reportValue[country_name]["recovery_rate"])
-
-def p_Rest_Recovery_Data(p):
-    'S15 : BRECOVERY_COUNTRY ALL RES_RECOV ALL'
+    '''S15 : BRECOVERY_COUNTRY ALL REST_ALL ALL
+            | BRECOVERY_COUNTRY ALL RES_RECOV ALL'''
     country_name = p[2].strip()
     if (country_name == "United States"):
         country_name = "USA"
     infection_rate = p[4].split(",")
     reportValue[country_name]["recovery_rate"] = infection_rate
-    print(country_name)
-    print(reportValue[country_name]["recovery_rate"])
+    # print(country_name)
+    # print(reportValue[country_name]["recovery_rate"])
+
 
 
 def p_error(p):
@@ -292,15 +304,15 @@ def read_html(data):
             country_file = open(country_path, "r")
             m_content = country_file.read()
             content = getReportData(m_content)
+            # print(country)
+            # if(country=="Peru"):
+            #     f = open("file.txt","w")
+            #     f.write(content)
+            #     f.close()
             parser.parse(content)
 
             if(checkRecoveryData(m_content) == True):
                 recovery_content = getRecoveryData(m_content)
-                if(country=="Russia"):
-                    f = open("file.txt","w")
-                    f.write(recovery_content)
-                    f.close()
-                # print(recovery_content)
                 parser.parse(recovery_content)
 
     print("Parsing Done!")
