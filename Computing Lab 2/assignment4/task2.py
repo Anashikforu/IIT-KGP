@@ -6,8 +6,6 @@ Created on Sun Feb 13 03:23:21 2022
 @author: ashikkhan
 """
 
-import requests
-import re
 import ply.lex as lex
 import ply.yacc as yacc
 import task1 as t1
@@ -26,6 +24,10 @@ world_info = {}
 
 pendamicPeriod =[]
 reportValue = {}
+closestSimilarReport = {}
+
+#history log file
+logfile = open("history.log","w")
 
 # lexical analyzer
 tokens = (
@@ -360,17 +362,18 @@ def dateRange(country_name,startDate,endDate):
     endDateVal = ""
     try:
         if(startDate.count('-') == 2 and endDate.count('-') == 2):
-            beginning = reportValue[country_name]["newcase_date"][0]
-            ending = reportValue[country_name]["newcase_date"][-1]
-            print(beginning)
             startDate = startDate.split('-')
             startD = datetime.datetime(int(startDate[2]), int(startDate[1]), int(startDate[0]))
             startdateVal = startD.strftime("%b %d, %Y")
             endDate = endDate.split('-')
             endD = datetime.datetime(int(endDate[2]), int(endDate[1]), int(endDate[0]))
             endDateVal  = endD.strftime("%b %d, %Y")
-            # if (beginning <= startdateVal and startdateVal <= endDateVal and endDateVal<=ending):
-            value = 1
+            startdateIndex = reportValue[country_name]["newcase_date"].index(startdateVal)
+            enddateIndex = reportValue[country_name]["newcase_date"].index(endDateVal)
+            if ( startdateIndex <= enddateIndex):
+                value = 1
+            else:
+                print("Invalid Range.")
     except:
         value=0
     return (value,startdateVal,endDateVal)
@@ -406,6 +409,78 @@ def countryQuery():
         else:
             print("Invalid option.\n")
 
+def showQueryResult(country_name,startdateIndex,enddateIndex,option_no,queryOption,queryFullName,similarity):
+
+    try:
+        req_list = reportValue[country_name][queryOption[option_no]]
+        startData = int(req_list[startdateIndex])
+        endData = int(req_list[enddateIndex])
+        changeinrate = ((endData- startData ) / endData) * 100
+        if(similarity == 0):
+            print("{} :{} to {} --> {} :{}".format(country_name,reportValue[country_name]["newcase_date"][startdateIndex],
+                                                   reportValue[country_name]["newcase_date"][enddateIndex],
+                                                   queryFullName[option_no], changeinrate))
+        else:
+            closestSimilarReport[country_name][queryOption[option_no]] = changeinrate
+    except:
+        if (similarity == 0):
+            print("{} :{} to {} --> {} :{}".format(country_name,reportValue[country_name]["newcase_date"][startdateIndex],
+                                                   reportValue[country_name]["newcase_date"][enddateIndex],
+                                                   queryFullName[option_no], 0))
+        else:
+            closestSimilarReport[country_name][queryOption[option_no]] = 0
+
+def getBestSimilarity(country_name):
+    queryOption = ['activecase_data', 'dailydeath_data', 'recovery_rate', 'newcase_data', ]
+    activecase_near_country = ''
+    activecase_near_value = 0
+    dailydeath_near_country = ''
+    dailydeath_near_value = 0
+    recovery_near_country = ''
+    recovery_near_value = 0
+    newcase_near_country = ''
+    newcase_near_value = 0
+    start = 0
+
+    for country in closestSimilarReport:
+        if(country != country_name):
+
+            if(start == 0 or abs(closestSimilarReport[country_name][queryOption[0]] - closestSimilarReport[country][queryOption[0]]) < activecase_near_value):
+                activecase_near_country = country
+                activecase_near_value = abs(closestSimilarReport[country_name][queryOption[0]] - closestSimilarReport[country][queryOption[0]])
+
+            if (start == 0 or abs(closestSimilarReport[country_name][queryOption[1]] - closestSimilarReport[country][queryOption[1]]) < dailydeath_near_value):
+                dailydeath_near_country = country
+                dailydeath_near_value = abs(closestSimilarReport[country_name][queryOption[1]] - closestSimilarReport[country][queryOption[1]])
+
+            if (start == 0 or abs(closestSimilarReport[country_name][queryOption[2]] - closestSimilarReport[country][queryOption[2]]) < recovery_near_value):
+                recovery_near_country = country
+                recovery_near_value = abs(closestSimilarReport[country_name][queryOption[2]] - closestSimilarReport[country][queryOption[2]])
+
+            if (start == 0 or abs(closestSimilarReport[country_name][queryOption[3]] - closestSimilarReport[country][queryOption[3]]) < newcase_near_value):
+                newcase_near_country = country
+                newcase_near_value = abs(closestSimilarReport[country_name][queryOption[3]] - closestSimilarReport[country][queryOption[3]])
+            #continuious
+            start = 1
+
+    best_similarity = min(activecase_near_value,dailydeath_near_value,newcase_near_value)
+    best_smlr_cntry = ''
+    similar_option = ''
+    if(best_similarity == activecase_near_value):
+        best_smlr_cntry = activecase_near_country
+        similar_option = "Change in active cases in %  "
+    elif(best_similarity == dailydeath_near_value):
+        best_smlr_cntry = dailydeath_near_country
+        similar_option = "Change in daily death in %   "
+    # elif (best_similarity == recovery_near_value):
+    #     best_smlr_cntry = recovery_near_country
+    #     similar_option = "Change in new recovered in %  "
+    elif (best_similarity == newcase_near_value):
+        best_smlr_cntry = newcase_near_country
+        similar_option = "Change in new cases in %   "
+
+    return (similar_option,best_smlr_cntry,best_similarity)
+
 def queryMenu(country_name):
     print("---------------------------------------------------------")
     print("     {} COVID-19 Coronavirus Pandemic Query   ".format(country_name))
@@ -417,6 +492,9 @@ def queryMenu(country_name):
     print("|   5. Closest country similar to any query between 1-4 |")
     print("---------------------------------------------------------")
 
+    queryOption = ['activecase_data','dailydeath_data','recovery_rate','newcase_data',]
+    queryFullName = [' Change in active cases in % ', 'Change in daily death in %', 'Change in new recovered in % ', 'Change in new cases in %  ']
+
     while (1):
         option_no = input("\nEnter the QUERY no ( number only ) (Enter (back) for going back):\n")
 
@@ -424,8 +502,9 @@ def queryMenu(country_name):
             break
         elif (checkOptionNo(option_no, 5)):
             option_no = int(option_no)
-            print(option_no)
-            print("Enter Query Start Date and End Date in range of {} and {}".format(reportValue[country_name]["newcase_date"][0],reportValue[country_name]["newcase_date"][-1]))
+
+            print("Enter Query Start Date and End Date in range of {} and {}".format(reportValue[country_name]["newcase_date"][0],
+                                                                                     reportValue[country_name]["newcase_date"][-1]))
             startDate = input("Start Date(Format 01-01-2022):")
             endDate = input("End Date(Format 01-01-2022):")
             (val,startDate,endDate) = dateRange(country_name,startDate,endDate)
@@ -433,8 +512,28 @@ def queryMenu(country_name):
                 print("Wrong Date Format! Try again.")
                 break
             else:
-                print(startDate)
-                print(endDate)
+                startdateIndex = reportValue[country_name]["newcase_date"].index(startDate)
+                enddateIndex = reportValue[country_name]["newcase_date"].index(endDate)
+
+                if (option_no < 5):
+                    similarity = 0
+                    option_no = option_no - 1
+                    showQueryResult(country_name,startdateIndex,enddateIndex,option_no,queryOption,queryFullName,similarity)
+                else:
+                    similarity = 1
+                    for country in countrylist:
+                        closestSimilarReport[country] ={}
+                        for opt in queryOption:
+                            closestSimilarReport[country][opt] = []
+                            option_no = queryOption.index(opt)
+                            showQueryResult(country, startdateIndex,enddateIndex, option_no,queryOption, queryFullName,similarity)
+                    (similar_option,best_smlr_cntry, best_similarity) = getBestSimilarity(country_name)
+                    print("{} :{} to {} --> Closest country similar to any query between 1-4 :{} ".format(country_name,
+                                                           reportValue[country_name]["newcase_date"][startdateIndex],
+                                                           reportValue[country_name]["newcase_date"][enddateIndex], best_smlr_cntry))
+
+                    print("Difference with {} and {} on based of {}: {}".format(country_name,best_smlr_cntry,similar_option,best_similarity))
+
         else:
             print("Invalid option.\n")
 
@@ -472,6 +571,10 @@ def subOptionMenu(menu,givenOption):
 
         print("{} --> {} : {}".format(givenOption,suboption[int(option_no) - 1],world_info[suboptionIndex[int(option_no) - 1]]))
 
+        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + \
+                  country_info[givenOption][suboptionIndex[int(option_no) - 1]] + '>' + '\n'
+        logfile.writelines(loc_str)
+
     elif (menu == "Continent" and checkOptionNo(option_no, 7)):
 
         option_no = int(option_no)
@@ -480,24 +583,40 @@ def subOptionMenu(menu,givenOption):
 
         print("{} --> {} : {}".format(givenOption,suboption[int(option_no) - 1],continent_info[givenOption][suboptionIndex[int(option_no) - 1]]))
 
+        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + \
+                  country_info[givenOption][suboptionIndex[int(option_no) - 1]] + '>' + '\n'
+        logfile.writelines(loc_str)
+
     elif (menu == "Country" and checkOptionNo(option_no, 10)):
 
         print("{} --> {} : {}".format(givenOption,suboption[int(option_no) - 1],country_info[givenOption][suboptionIndex[int(option_no) - 1]]))
 
+        loc_str = '<' + givenOption + '>'+' '+'<'+ suboption[int(option_no) - 1] + '>'+' '+'<' + country_info[givenOption][suboptionIndex[int(option_no) - 1]] + '>' + '\n'
+        logfile.writelines(loc_str)
     elif (menu == "World" and option_no in suboption and option_no not in ['Total tests','Tests/million']):
         option_no = suboption.index(option_no)
 
         print("{} --> {} : {}".format(givenOption,suboption[int(option_no) - 1],world_info[suboptionIndex[int(option_no) - 1]]))
 
+        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + \
+                  country_info[givenOption][suboptionIndex[int(option_no) - 1]] + '>' + '\n'
+        logfile.writelines(loc_str)
     elif (menu == "Continent" and option_no in suboption and option_no not in ['Total tests','Death/million','Tests/million']):
         option_no = suboption.index(option_no)
 
         print("{} --> {} : {}".format(givenOption,suboption[int(option_no) - 1],continent_info[givenOption][suboptionIndex[int(option_no) - 1]]))
 
+        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + \
+                  country_info[givenOption][suboptionIndex[int(option_no) - 1]] + '>' + '\n'
+        logfile.writelines(loc_str)
     elif (menu == "Country" and option_no in suboption):
         option_no = suboption.index(option_no)
 
         print("{} --> {} : {}".format(givenOption,suboption[int(option_no) - 1],country_info[givenOption][suboptionIndex[int(option_no) - 1]]))
+
+        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + \
+                  country_info[givenOption][suboptionIndex[int(option_no) - 1]] + '>' + '\n'
+        logfile.writelines(loc_str)
     else:
         print("Invalid option.\n")
 
@@ -592,6 +711,8 @@ def main():
             break
         else:
             print("Invalid option.\n")
+    logfile.writelines("Khatam")
+    logfile.close()
 
 if __name__=="__main__":
     main()
