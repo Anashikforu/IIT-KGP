@@ -92,11 +92,13 @@ def main():
             country_link = get_country_link(all_country_links,country)
             country_url = "https://www.worldometers.info/coronavirus/"+country_link
             country_content = get_page_content(country_url)
-            print(country_url)
+
             if not os.path.isfile(country_path):
                 with open(os.path.join(os.path.dirname(__file__), country_path), 'w') as country_file:
                     country_file.write(country_content)
                     country_file.close()
+
+            print("download completed ", country_url)
 
 if __name__ == "__main__":
     main()

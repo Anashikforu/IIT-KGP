@@ -36,10 +36,8 @@ def get_country_link(links,country):
 
     return result
 
+def get_country_dic():
 
-def main():
-    if not os.path.exists("./HTML"):
-        os.mkdir("./HTML")
     inputFileName = "worldometers_countrylist.txt"
     with open(inputFileName) as f:
         content = f.readlines()
@@ -66,6 +64,11 @@ def main():
             country.strip()
             country_dict[continent].append(country)
 
+    return country_dict
+
+def main():
+    if not os.path.exists("./HTML"):
+        os.mkdir("./HTML")
 
     url = "https://www.worldometers.info/coronavirus/"
     # page = re.search('([^\/])+$', url)
@@ -79,6 +82,7 @@ def main():
             input_file.close()
 
     all_country_links = extract_all_country_links(content)
+    country_dict = get_country_dic()
 
     for continent in country_dict:
         if not os.path.exists("./HTML/"+continent):
@@ -88,11 +92,13 @@ def main():
             country_link = get_country_link(all_country_links,country)
             country_url = "https://www.worldometers.info/coronavirus/"+country_link
             country_content = get_page_content(country_url)
-            print(country_url)
+
             if not os.path.isfile(country_path):
                 with open(os.path.join(os.path.dirname(__file__), country_path), 'w') as country_file:
                     country_file.write(country_content)
                     country_file.close()
+
+            print("download completed ", country_url)
 
 if __name__ == "__main__":
     main()

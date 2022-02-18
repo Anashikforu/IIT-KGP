@@ -51,8 +51,7 @@ tokens = (
             'DAILYDEATH_DATE',
             'DAILYDEATH_DATA',
             'BRECOVERY_COUNTRY',
-            'REST_ALL',
-            'RES_RECOV',
+            'LRECOVERY',
             'ALL'
           )
 
@@ -78,9 +77,8 @@ t_NACTIVECASES              =   r'''<\/script>\s<div\sstyle="[\d\w() -.'\"()\s\:
 t_NDAILYDEATH_DATE          =   r'''<\/h3>\s<style>[\d\w() -.'\/\"(){}:;<>=\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s}[\d\w() -.'\/\"():{}\s\$]+\[{[\d\w() -.'\/\"():\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s}\][\d\w() -.'\/\":{()\s\$]+\[{[\d\w() -.'\/\"():{}\s\$]+\]\s[\d\w() -.'\/\"(){};:\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s}[\d\w() -.'\/\"():{}\s\$]+\[{[\d\w() -.'\/\"():\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s}\][\d\w() -.'\/\"():{\s\$]+\[{[\d\w() -.'\/\"():{}\s\$]+\][\d\w() -.'\/\"();<>=:\s{}\$]+'Daily\sDeaths'[\d\w() -.'\/\"()\s{}:<>\$]+'''
 t_DAILYDEATH_DATE           =   r'''\]\s}\s\],[\d\w() :{} [\]; -.'\/\"()\s\$]+<\/script>\s<\/div>\s<\/div>\s<div\sclass="[\d\w() -.'\/\"()\s\$]+>\s<div\sclass="[\d\w() -.'\/\"()\s\$]+>\s<h3>[\d\w() -.'\/\"()\s\$]+<\/h3>\s<style>[\d\w() { :;} -.'\/\"()>\s\$]+<\/style>\s[<>{:}[\];=\d\w() -.'\/\"()\s\$]+<h3>Daily\sNew\sDeaths\sin\s[\d\w() -.'\/\"()\s\$]+<\/h3>[<=>{:}\d\w() -.'\/\"()\s\$]+text:\s'Daily\sDeaths'[\d\w()}:{<> -.'\/\"()\s\$]+\['''
 t_DAILYDEATH_DATA           =   r''']\s}[\d\w():{}; -.'\/\"()\s\$]+\[{\sname:\s'Daily\sDeaths',[\d\w(): -.'\/\"()\s\$]+\['''
-t_BRECOVERY_COUNTRY         =   r'''<a\shref="[\/\#\w\d]+">Countries<\/a>\s\/\s'''
-t_REST_ALL                  =   r'''<\/div>\s<div\sstyle="[\w\d\# %\-:;]+">[\d\w() -.'\/\":()\s\$]+<\/div>\s<div\sstyle="[\w\d\# %\-:;]+">\s<h1>\s<div\sstyle="[\w\d\# %\-:;]+">[<>=;:{}\d\w() -.'\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+\][\d\w();{}: -.'\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s},[\d\w():{}\ -.'\/\"()\s\$]+\[[\d,]+\][\d\w():{} -.'\/\"()\s\$]+\[{\sname:\s'Currently\sInfected',[\d\w(): -.'\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s}\][\d\w():{ -.'\/\"()\s\$]+\[[\d\w(){}: -.'\/\"()\s\$]+\][\d\w() <> {};=: -.'\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s}[\d\w():{} -.'\/\"()\s\$]+\[[{}:\d\w() -.'\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+]\s},\s{\sname:\s'Recovery\sRate',[\d\w(): -.'\/\"()\s\$]+\['''
-t_RES_RECOV                 =   r'''</div>\s<div\sstyle=[\d\w() -.':;\/\"()\s\$]+>[\d\w() -.':<>=;{}\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s}[\d\w() -.'\/\"():{}\s\$]+\[[\d\w() -.{:'\/\"()\s\$]+\[[\d\w() -.'\/\"()\s\$]+\]\s},\s{\sname:\s'Recovery\sRate',[\d\w() -.'\/\"():\s\$]+\['''
+t_BRECOVERY_COUNTRY         =   r'''[\d\w]+<\/h3>\s<div\sid="cases-cured-daily">'''
+t_LRECOVERY                 =   r'''<\/div>\s<script\stype="text\/javascript">\s[\d\w() {} -.'\"()\s\:;=]+\[[\d\w() -.'\/\"()\s\$]+\]\s},[\d\w() -.'\/\"():{}\s\$]+\[{\sname:\s'New\sRecoveries',[\d\w() -.'\/\"():\s\$]+\['''
 t_ignore_COMMENT            =   r'\#.*'
 t_ignore                    =   ' \t'    # ignores spaces and tabs
 
@@ -164,15 +162,17 @@ def p_world_data(p):
 
 def p_continent_data(p):
     'S12 : TR_CONTINENT TD_NULL TD_CLOSE TD_OPEN NOBR ALL NOBR_CLOSE TD_CLOSE TD_NULL ALL TD_CLOSE TD_NULL ALL TD_CLOSE TD_NULL ALL TD_CLOSE TD_NULL ALL TD_CLOSE TD_NULL ALL TD_CLOSE TD_NULL ALL TD_CLOSE TD_NULL ALL TD_CLOSE TD_NULL ALL TD_CLOSE'
-    continent_info['continent_name'] = p[6]
-    continent_info['total_cases'] = p[10]
-    continent_info['new_cases'] = p[13]
-    continent_info['total_death'] = p[16]
-    continent_info['new_death'] = p[19]
-    continent_info['total_recovered'] = p[22]
-    continent_info['new_recovered'] = p[25]
-    continent_info['active_cases'] = p[28]
-    continent_info['critical'] = p[30]
+    continent_name = p[6]
+    continent_info[continent_name] = {}
+    continent_info[continent_name]['continent_name'] = p[6]
+    continent_info[continent_name]['total_cases'] = p[10]
+    continent_info[continent_name]['new_cases'] = p[13]
+    continent_info[continent_name]['total_death'] = p[16]
+    continent_info[continent_name]['new_death'] = p[19]
+    continent_info[continent_name]['total_recovered'] = p[22]
+    continent_info[continent_name]['new_recovered'] = p[25]
+    continent_info[continent_name]['active_cases'] = p[28]
+    continent_info[continent_name]['critical'] = p[30]
     # print(continent_info)
 
 
@@ -239,17 +239,10 @@ def store_report_data(newcase_date, newcase_data, country_name, activecase_date,
     reportValue[country_name]["dailydeath_data"] = dailydeath_data.split(",")
 
 def p_Recovery_Data(p):
-    '''S15 : BRECOVERY_COUNTRY ALL REST_ALL ALL
-            | BRECOVERY_COUNTRY ALL RES_RECOV ALL'''
-    country_name = p[2].strip()
-    if (country_name == "United States"):
-        country_name = "USA"
-    infection_rate = p[4].split(",")
-    reportValue[country_name]["recovery_rate"] = infection_rate
-    # print(country_name)
-    # print(reportValue[country_name]["recovery_rate"])
-
-
+    '''S15 : BRECOVERY_COUNTRY LRECOVERY ALL '''
+    country_name = p[1].split('<')[0]
+    recovery_rate = p[3].split(",")
+    reportValue[country_name]["recovery_rate"] = recovery_rate
 
 def p_error(p):
     pass
@@ -276,8 +269,8 @@ def getReportData(data):
     return data
 
 def checkRecoveryData(data):
-    delim = "name: 'Recovery Rate',"
-    delim_before = 'maxWidth: 400 }'
+    delim = "name: 'New Recoveries',"
+    delim_before = '<h3>Outcome of Cases (Recovery or Death) in'
     if(data.find(delim) == -1 ):
         return False
     elif(data.find(delim_before) == -1):
@@ -287,9 +280,9 @@ def checkRecoveryData(data):
     return True
 
 def getRecoveryData(data):
-    delim = '<div class="label-counter" id="page-top"><a href="/coronavirus/">World</a> / '
+    delim = '<h3>Newly Infected vs. Newly Recovered in '
     data = data.partition(delim)[2]
-    delim_before = 'maxWidth: 400 }'
+    delim_before = '<h3>Outcome of Cases (Recovery or Death) in'
     data = data.split(delim_before)[0]
     return data
 
@@ -309,14 +302,14 @@ def read_html(data):
             m_content = country_file.read()
             content = getReportData(m_content)
             # print(country)
-            # if(country=="Peru"):
-            #     f = open("file.txt","w")
-            #     f.write(content)
-            #     f.close()
             parser.parse(content)
 
             if(checkRecoveryData(m_content) == True):
                 recovery_content = getRecoveryData(m_content)
+                # print("country")
+                f = open("hi.txt", "w")
+                f.write(recovery_content)
+                f.close()
                 parser.parse(recovery_content)
 
     print("Parsing Done!")
@@ -413,13 +406,23 @@ def showQueryResult(country_name,startdateIndex,enddateIndex,option_no,queryOpti
 
     try:
         req_list = reportValue[country_name][queryOption[option_no]]
-        startData = int(req_list[startdateIndex])
-        endData = int(req_list[enddateIndex])
-        changeinrate = ((endData- startData ) / endData) * 100
+        if(req_list[startdateIndex] == 'null' and  req_list[enddateIndex] == 'null'):
+            changeinrate = 0
+        elif((req_list[startdateIndex] == 'null' and  req_list[enddateIndex] != 'null') or (req_list[startdateIndex] == '0')):
+            changeinrate = 100
+        elif (req_list[startdateIndex] != 'null' and req_list[enddateIndex] == 'null'):
+            changeinrate = -100
+        else:
+            startData = int(req_list[startdateIndex])
+            endData = int(req_list[enddateIndex])
+            changeinrate = ((endData- startData ) / endData) * 100
+
         if(similarity == 0):
             print("{} :{} to {} --> {} :{}".format(country_name,reportValue[country_name]["newcase_date"][startdateIndex],
                                                    reportValue[country_name]["newcase_date"][enddateIndex],
                                                    queryFullName[option_no], changeinrate))
+            loc_str = '<' + country_name + '>' + ' ' + '< Query  -' + str(option_no+1) + '>' + ' ' + '< '+ str(changeinrate) +' >' + '\n'
+            logfile.writelines(loc_str)
         else:
             closestSimilarReport[country_name][queryOption[option_no]] = changeinrate
     except:
@@ -427,10 +430,23 @@ def showQueryResult(country_name,startdateIndex,enddateIndex,option_no,queryOpti
             print("{} :{} to {} --> {} :{}".format(country_name,reportValue[country_name]["newcase_date"][startdateIndex],
                                                    reportValue[country_name]["newcase_date"][enddateIndex],
                                                    queryFullName[option_no], 0))
+            loc_str = '<' + country_name + '>' + ' ' + '< Query  -'+ str(option_no+1) + '>' + ' ' + '< 0 >' + '\n'
+            logfile.writelines(loc_str)
         else:
             closestSimilarReport[country_name][queryOption[option_no]] = 0
 
-def getBestSimilarity(country_name):
+def getBestSimilarity(country_name,startdateIndex,enddateIndex):
+
+    queryOption = ['activecase_data', 'dailydeath_data', 'recovery_rate', 'newcase_data', ]
+    queryFullName = [' Change in active cases in % ', 'Change in daily death in %', 'Change in new recovered in % ','Change in new cases in %  ']
+    similarity = 1
+    for country in countrylist:
+        closestSimilarReport[country] = {}
+        for opt in queryOption:
+            closestSimilarReport[country][opt] = []
+            option_no = queryOption.index(opt)
+            showQueryResult(country, startdateIndex, enddateIndex, option_no, queryOption, queryFullName, similarity)
+
     queryOption = ['activecase_data', 'dailydeath_data', 'recovery_rate', 'newcase_data', ]
     activecase_near_country = ''
     activecase_near_value = 0
@@ -463,7 +479,13 @@ def getBestSimilarity(country_name):
             #continuious
             start = 1
 
-    best_similarity = min(activecase_near_value,dailydeath_near_value,newcase_near_value)
+    similarity_dict = {}
+    similarity_dict['similarity_value'] = []
+    similarity_dict['similarity_value'] = [activecase_near_value, dailydeath_near_value, recovery_near_value,newcase_near_value]
+    similarity_dict['similarity_country'] = []
+    similarity_dict['similarity_country'] = [activecase_near_country, dailydeath_near_country, recovery_near_country,newcase_near_country]
+
+    best_similarity = min(activecase_near_value,dailydeath_near_value,recovery_near_value,newcase_near_value)
     best_smlr_cntry = ''
     similar_option = ''
     if(best_similarity == activecase_near_value):
@@ -472,14 +494,14 @@ def getBestSimilarity(country_name):
     elif(best_similarity == dailydeath_near_value):
         best_smlr_cntry = dailydeath_near_country
         similar_option = "Change in daily death in %   "
-    # elif (best_similarity == recovery_near_value):
-    #     best_smlr_cntry = recovery_near_country
-    #     similar_option = "Change in new recovered in %  "
+    elif (best_similarity == recovery_near_value):
+        best_smlr_cntry = recovery_near_country
+        similar_option = "Change in new recovered in %  "
     elif (best_similarity == newcase_near_value):
         best_smlr_cntry = newcase_near_country
         similar_option = "Change in new cases in %   "
 
-    return (similar_option,best_smlr_cntry,best_similarity)
+    return (similar_option,best_smlr_cntry,best_similarity,similarity_dict)
 
 def queryMenu(country_name):
     print("---------------------------------------------------------")
@@ -515,29 +537,45 @@ def queryMenu(country_name):
                 startdateIndex = reportValue[country_name]["newcase_date"].index(startDate)
                 enddateIndex = reportValue[country_name]["newcase_date"].index(endDate)
 
+                (similar_option, best_smlr_cntry, best_similarity, similarity_dict) = getBestSimilarity(country_name, startdateIndex, enddateIndex)
+
                 if (option_no < 5):
                     similarity = 0
                     option_no = option_no - 1
                     showQueryResult(country_name,startdateIndex,enddateIndex,option_no,queryOption,queryFullName,similarity)
+                    print("Closest country similar to {} : {} , difference margin {}".format(queryFullName[option_no],similarity_dict["similarity_country"][option_no],similarity_dict["similarity_value"][option_no]))
                 else:
-                    similarity = 1
-                    for country in countrylist:
-                        closestSimilarReport[country] ={}
-                        for opt in queryOption:
-                            closestSimilarReport[country][opt] = []
-                            option_no = queryOption.index(opt)
-                            showQueryResult(country, startdateIndex,enddateIndex, option_no,queryOption, queryFullName,similarity)
-                    (similar_option,best_smlr_cntry, best_similarity) = getBestSimilarity(country_name)
-                    print("{} :{} to {} --> Closest country similar to any query between 1-4 :{} ".format(country_name,
-                                                           reportValue[country_name]["newcase_date"][startdateIndex],
-                                                           reportValue[country_name]["newcase_date"][enddateIndex], best_smlr_cntry))
+                    for x in range(4):
+                        print("\n{} :{} to {} --> {} :{}".format(country_name, reportValue[country_name]["newcase_date"][startdateIndex],reportValue[country_name]["newcase_date"][enddateIndex],queryFullName[x], closestSimilarReport[country_name][queryOption[x]]))
+                        print("Closest country similar to {} : {} , difference margin {}".format(queryFullName[x],similarity_dict["similarity_country"][x], similarity_dict["similarity_value"][x]))
+                    print("\nDifference with {} and {} on based of {}: {}".format(country_name, best_smlr_cntry,similar_option, best_similarity))
+                    print("\n{} :{} to {} --> Closest country similar to any query between 1-4 :{} ".format(country_name,reportValue[country_name]["newcase_date"][startdateIndex], reportValue[country_name]["newcase_date"][enddateIndex], best_smlr_cntry))
 
-                    print("Difference with {} and {} on based of {}: {}".format(country_name,best_smlr_cntry,similar_option,best_similarity))
+                    loc_str = '<' + country_name + '>' + ' ' + '< Query  -5>' + ' ' + '< ' + best_smlr_cntry + ' >' + '\n'
+                    logfile.writelines(loc_str)
 
         else:
             print("Invalid option.\n")
 
+def world_percentage(option_no,suboptionIndex,comp_data):
+    world_percen = "null"
+    try:
+        if (option_no not in [5, 7]):
+            world_percen = world_info[suboptionIndex[int(option_no) - 1]]
 
+            world_percen = world_percen.replace(",", "")
+            world_percen = world_percen.replace("+", "")
+            world_percen = int(world_percen)
+
+            comp_data = comp_data.replace(",", "")
+            comp_data = comp_data.replace("+", "")
+            comp_data = int(comp_data)
+
+            world_percen = (comp_data/world_percen)*100
+    except:
+        world_percen = "null"
+
+    return world_percen
 
 def subOptionMenu(menu,givenOption):
     suboption = ['Total cases','Active cases','Total deaths','Total recovered','Total tests','Death/million','Tests/million','New case','New death','New recovered']
@@ -571,8 +609,7 @@ def subOptionMenu(menu,givenOption):
 
         print("{} --> {} : {}".format(givenOption,suboption[int(option_no) - 1],world_info[suboptionIndex[int(option_no) - 1]]))
 
-        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + \
-                  country_info[givenOption][suboptionIndex[int(option_no) - 1]] + '>' + '\n'
+        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + str(world_info[suboptionIndex[int(option_no) - 1]]) + '>' + '\n'
         logfile.writelines(loc_str)
 
     elif (menu == "Continent" and checkOptionNo(option_no, 7)):
@@ -581,41 +618,42 @@ def subOptionMenu(menu,givenOption):
         if (option_no > 4):
             option_no += 3
 
-        print("{} --> {} : {}".format(givenOption,suboption[int(option_no) - 1],continent_info[givenOption][suboptionIndex[int(option_no) - 1]]))
+        world_percen = world_percentage(option_no,suboptionIndex,continent_info[givenOption][suboptionIndex[int(option_no) - 1]])
 
-        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + \
-                  country_info[givenOption][suboptionIndex[int(option_no) - 1]] + '>' + '\n'
+        print("{} --> {} : {}  ,the percent of total world cases :  {}".format(givenOption,suboption[int(option_no) - 1],continent_info[givenOption][suboptionIndex[int(option_no) - 1]],world_percen))
+
+        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + str(continent_info[givenOption][suboptionIndex[int(option_no) - 1]]) + '>' + '\n'
         logfile.writelines(loc_str)
 
     elif (menu == "Country" and checkOptionNo(option_no, 10)):
+        world_percen = world_percentage(option_no, suboptionIndex,country_info[givenOption][suboptionIndex[int(option_no) - 1]])
 
-        print("{} --> {} : {}".format(givenOption,suboption[int(option_no) - 1],country_info[givenOption][suboptionIndex[int(option_no) - 1]]))
+        print("{} --> {} : {}  ,the percent of total world cases :  {}".format(givenOption,suboption[int(option_no) - 1],country_info[givenOption][suboptionIndex[int(option_no) - 1]],world_percen))
 
-        loc_str = '<' + givenOption + '>'+' '+'<'+ suboption[int(option_no) - 1] + '>'+' '+'<' + country_info[givenOption][suboptionIndex[int(option_no) - 1]] + '>' + '\n'
+        loc_str = '<' + givenOption + '>'+' '+'<'+ suboption[int(option_no) - 1] + '>'+' '+'<' + str(country_info[givenOption][suboptionIndex[int(option_no) - 1]] )+ '>' + '\n'
         logfile.writelines(loc_str)
     elif (menu == "World" and option_no in suboption and option_no not in ['Total tests','Tests/million']):
         option_no = suboption.index(option_no)
 
         print("{} --> {} : {}".format(givenOption,suboption[int(option_no) - 1],world_info[suboptionIndex[int(option_no) - 1]]))
 
-        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + \
-                  country_info[givenOption][suboptionIndex[int(option_no) - 1]] + '>' + '\n'
+        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + str(world_info[suboptionIndex[int(option_no) - 1]]) + '>' + '\n'
         logfile.writelines(loc_str)
     elif (menu == "Continent" and option_no in suboption and option_no not in ['Total tests','Death/million','Tests/million']):
         option_no = suboption.index(option_no)
+        world_percen = world_percentage(option_no, suboptionIndex, continent_info[givenOption][suboptionIndex[int(option_no) - 1]])
 
-        print("{} --> {} : {}".format(givenOption,suboption[int(option_no) - 1],continent_info[givenOption][suboptionIndex[int(option_no) - 1]]))
+        print("{} --> {} : {} , the percent of total world cases :  {}".format(givenOption,suboption[int(option_no) - 1],continent_info[givenOption][suboptionIndex[int(option_no) - 1]],world_percen))
 
-        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + \
-                  country_info[givenOption][suboptionIndex[int(option_no) - 1]] + '>' + '\n'
+        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + str(continent_info[givenOption][suboptionIndex[int(option_no) - 1]]) + '>' + '\n'
         logfile.writelines(loc_str)
     elif (menu == "Country" and option_no in suboption):
         option_no = suboption.index(option_no)
+        world_percen = world_percentage(option_no, suboptionIndex,country_info[givenOption][suboptionIndex[int(option_no) - 1]])
 
-        print("{} --> {} : {}".format(givenOption,suboption[int(option_no) - 1],country_info[givenOption][suboptionIndex[int(option_no) - 1]]))
+        print("{} --> {} : {}  ,,the percent of total world cases :  {}".format(givenOption,suboption[int(option_no) - 1],country_info[givenOption][suboptionIndex[int(option_no) - 1]],world_percen))
 
-        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + \
-                  country_info[givenOption][suboptionIndex[int(option_no) - 1]] + '>' + '\n'
+        loc_str = '<' + givenOption + '>' + ' ' + '<' + suboption[int(option_no) - 1] + '>' + ' ' + '<' + str(country_info[givenOption][suboptionIndex[int(option_no) - 1]]) + '>' + '\n'
         logfile.writelines(loc_str)
     else:
         print("Invalid option.\n")
@@ -711,7 +749,8 @@ def main():
             break
         else:
             print("Invalid option.\n")
-    logfile.writelines("Khatam")
+
+    # logfile.writelines("End!")
     logfile.close()
 
 if __name__=="__main__":
