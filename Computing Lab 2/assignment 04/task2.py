@@ -254,6 +254,7 @@ def processReportData(data):
 
     return data
 
+#Extract Yesterday Data from the page
 def getYesterdayData(data):
     delim = '<table id="main_table_countries_yesterday" class="table table-bordered table-hover main_table_countries" style="width:100%;margin-top: 0px !important;display:none;">'
     data = data.partition(delim)[2]
@@ -261,6 +262,7 @@ def getYesterdayData(data):
     data = data.split(delim_before)[0]
     return data
 
+#Extract Query Report Data
 def getReportData(data):
     delim = '<h3>Daily New Cases in '
     data = data.partition(delim)[2]
@@ -268,6 +270,7 @@ def getReportData(data):
     data = data.split(delim_before)[0]
     return data
 
+#Check Query Data Availablity
 def checkRecoveryData(data):
     delim = "name: 'New Recoveries',"
     delim_before = '<h3>Outcome of Cases (Recovery or Death) in'
@@ -279,6 +282,7 @@ def checkRecoveryData(data):
         return False
     return True
 
+#Extract Query Report Data
 def getRecoveryData(data):
     delim = '<h3>Newly Infected vs. Newly Recovered in '
     data = data.partition(delim)[2]
@@ -286,6 +290,7 @@ def getRecoveryData(data):
     data = data.split(delim_before)[0]
     return data
 
+#Parse the Data using Ply
 def read_html(data):
     data = getYesterdayData(data)
     # print(data)
@@ -307,14 +312,15 @@ def read_html(data):
             if(checkRecoveryData(m_content) == True):
                 recovery_content = getRecoveryData(m_content)
                 # print("country")
-                f = open("hi.txt", "w")
-                f.write(recovery_content)
-                f.close()
+                # f = open("hi.txt", "w")
+                # f.write(recovery_content)
+                # f.close()
                 parser.parse(recovery_content)
 
     print("Parsing Done!")
 
 #---------------FIle Wise----------------------------------------
+#Extract the country list
 def extract_countrylist():
     inputFileName = "worldometers_countrylist.txt"
     with open(inputFileName) as f:
@@ -339,7 +345,7 @@ def extract_countrylist():
             countrylist.append(country)
 
 #-----------------------------------------------------
-
+#Validate User Input
 def checkOptionNo(element,lenth):
     try:
         if(int(element) and int(element) <= lenth):
@@ -349,6 +355,7 @@ def checkOptionNo(element,lenth):
     except ValueError:
         return False
 
+#Validate User Input Date Range
 def dateRange(country_name,startDate,endDate):
     value=0
     startdateVal = ""
@@ -371,6 +378,7 @@ def dateRange(country_name,startDate,endDate):
         value=0
     return (value,startdateVal,endDateVal)
 
+#Validate User Inputed Country Selection
 def countryQuery():
     optionListLowerCase = []
     for option_reg in countrylist:
@@ -401,6 +409,15 @@ def countryQuery():
             queryMenu(country_name)
         else:
             print("Invalid option.\n")
+
+#Extract the QUERY result and show
+# for a given country, you need to answer the queries below-[given time range]
+# 1. Change in active cases in %
+# 2. Change in daily death in %
+# 3. Change in new recovered in %
+# 4. Change in new cases in %
+# 5. Closest country similar to any query between 1-4
+# Ask the user for the start and end date.
 
 def showQueryResult(country_name,startdateIndex,enddateIndex,option_no,queryOption,queryFullName,similarity):
 
@@ -435,6 +452,7 @@ def showQueryResult(country_name,startdateIndex,enddateIndex,option_no,queryOpti
         else:
             closestSimilarReport[country_name][queryOption[option_no]] = 0
 
+# 5. Closest country similar to any query between 1-4
 def getBestSimilarity(country_name,startdateIndex,enddateIndex):
 
     queryOption = ['activecase_data', 'dailydeath_data', 'recovery_rate', 'newcase_data', ]
@@ -503,6 +521,13 @@ def getBestSimilarity(country_name,startdateIndex,enddateIndex):
 
     return (similar_option,best_smlr_cntry,best_similarity,similarity_dict)
 
+# for a given country, you need to answer the queries below-[given time range]
+# 1. Change in active cases in %
+# 2. Change in daily death in %
+# 3. Change in new recovered in %
+# 4. Change in new cases in %
+# 5. Closest country similar to any query between 1-4
+# Ask the user for the start and end date.
 def queryMenu(country_name):
     print("---------------------------------------------------------")
     print("     {} COVID-19 Coronavirus Pandemic Query   ".format(country_name))
@@ -557,8 +582,10 @@ def queryMenu(country_name):
         else:
             print("Invalid option.\n")
 
+#provide the percent of total world cases for each of the queries.
+
 def world_percentage(option_no,suboptionIndex,comp_data):
-    world_percen = "null"
+    world_percen = "not available"
     try:
         if (option_no not in [5, 7]):
             world_percen = world_info[suboptionIndex[int(option_no) - 1]]
@@ -576,6 +603,11 @@ def world_percentage(option_no,suboptionIndex,comp_data):
         world_percen = "null"
 
     return world_percen
+
+# extract the following fields for any country/continent/world -
+# a. Total cases b. Active cases c. Total deaths d. Total recovered e. Total tests
+# f. Death/million g. Tests/million h. New case i. New death  j. New recovered
+# Using yesterday’s data to answer the above queries
 
 def subOptionMenu(menu,givenOption):
     suboption = ['Total cases','Active cases','Total deaths','Total recovered','Total tests','Death/million','Tests/million','New case','New death','New recovered']
@@ -659,7 +691,10 @@ def subOptionMenu(menu,givenOption):
         print("Invalid option.\n")
 
 
-
+# extract the following fields for any country/continent/world -
+# a. Total cases b. Active cases c. Total deaths d. Total recovered e. Total tests
+# f. Death/million g. Tests/million h. New case i. New death  j. New recovered
+# Using yesterday’s data to answer the above queries
 def optionMenu(optionList,menu):
 
     optionListLowerCase = []
