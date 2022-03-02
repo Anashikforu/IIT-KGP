@@ -1,0 +1,54 @@
+1) SELECT `Name`,`TType`,`Surface`,`NumRounds` FROM `tournament` ORDER BY(`NumRounds`) ASC
+
+2) SELECT player.Name FROM player  INNER JOIN countrycodes ON player.CCode=countrycodes.Code WHERE countrycodes.Country = "Australia"
+
+3) SELECT NAME,Location,StartDate,EndDate,DATEDIFF(STR_TO_DATE(REPLACE(EndDate, '-', ' '),'%d %M %Y'), STR_TO_DATE(REPLACE(StartDate, '-', ' '),'%d %M %Y')) AS Duration,NumROunds FROM tournament WHERE Surface = "Hard" AND NumROunds > 5
+
+4) SELECT  tournament.Name , tournament.TType,SUBSTRING_INDEX(tournament.StartDate, '-', -1) AS corresponding_year,COUNT(MID) FROM matches INNER JOIN tournament ON tournament.TID = matches.TID GROUP BY matches.TID 
+
+5) SELECT NAME,TType,DATEDIFF(STR_TO_DATE(REPLACE(EndDate, '-', ' '),'%d %M %Y'), STR_TO_DATE(REPLACE(StartDate, '-', ' '),'%d %M %Y')) AS Duration FROM tournament WHERE  DATEDIFF(STR_TO_DATE(REPLACE(EndDate, '-', ' '),'%d %M %Y'), STR_TO_DATE(REPLACE(StartDate, '-', ' '),'%d %M %Y')) > 14
+
+6) SELECT player.Name FROM playedin INNER JOIN registration ON registration.RegistrNum = playedin.RegistrNum INNER JOIN player ON player.PID = registration.PID
+
+7) SELECT player.Name,player.Gender,countrycodes.Country ,tournament.Name , tournament.TType ,SUBSTRING_INDEX(tournament.StartDate, '-', -1) AS YEAR FROM player  
+INNER JOIN countrycodes ON player.CCode=countrycodes.Code 
+INNER JOIN registration ON registration.PID = player.PID 
+INNER JOIN playedin ON playedin.RegistrNum = registration.RegistrNum
+INNER JOIN tournament ON tournament.TID = playedin.TID
+WHERE countrycodes.Country = "Australia"
+AND player.Gender = "M"
+AND tournament.Name = "French Open" 
+AND tournament.TType = "Doubles"
+AND SUBSTRING_INDEX(tournament.StartDate, '-', -1) = 2007
+
+8) SELECT player.Name ,tournament.Name , tournament.TType ,SUBSTRING_INDEX(tournament.StartDate, '-', -1) AS YEAR FROM player  
+INNER JOIN registration ON registration.PID = player.PID 
+INNER JOIN playedin ON playedin.RegistrNum = registration.RegistrNum
+INNER JOIN tournament ON tournament.TID = playedin.TID
+WHERE tournament.Name = "Wimbledon" 
+AND tournament.TType = "Doubles"
+AND SUBSTRING_INDEX(tournament.StartDate, '-', -1) = 2007
+
+9) SELECT player.Name ,tournament.Name , tournament.TType ,SUBSTRING_INDEX(tournament.StartDate, '-', -1) AS YEAR FROM player  
+INNER JOIN registration ON registration.PID = player.PID 
+INNER JOIN playedin ON playedin.RegistrNum = registration.RegistrNum
+INNER JOIN tournament ON tournament.TID = playedin.TID
+WHERE tournament.Name = "Australian Open" 
+AND tournament.TType = "Singles"
+AND SUBSTRING_INDEX(tournament.StartDate, '-', -1) = 2007
+
+10) SELECT player.Name ,tournament.Name , tournament.TType,tournament.Surface FROM player  
+INNER JOIN registration ON registration.PID = player.PID 
+INNER JOIN playedin ON playedin.RegistrNum = registration.RegistrNum
+INNER JOIN tournament ON tournament.TID = playedin.TID
+WHERE tournament.Surface = "Clay"
+AND tournament.TType = "Doubles"
+
+11)SELECT matchresults.MID , player.Name AS MatchWinner FROM matchresults
+INNER JOIN registration ON registration.RegistrNum = matchresults.Winner
+INNER JOIN player ON player.PID = registration.PID
+INNER JOIN matches ON matches.MID = matchresults.MID
+INNER JOIN tournament ON tournament.TID = matches.TID
+WHERE tournament.Name = "US Open"  
+AND SUBSTRING_INDEX(tournament.StartDate, '-', -1) = 2007
+GROUP BY matchresults.MID

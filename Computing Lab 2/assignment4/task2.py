@@ -558,7 +558,7 @@ def queryMenu(country_name):
             print("Invalid option.\n")
 
 def world_percentage(option_no,suboptionIndex,comp_data):
-    world_percen = "null"
+    world_percen = "not available"
     try:
         if (option_no not in [5, 7]):
             world_percen = world_info[suboptionIndex[int(option_no) - 1]]
